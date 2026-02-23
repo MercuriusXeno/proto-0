@@ -1,0 +1,59 @@
+@inject GameSessionHost Host
+
+<div class="action-log-panel panel">
+    <h3>Action Log</h3>
+    @if (_logEntries.Count == 0)
+    {
+        <div class="log-empty">No recent actions</div>
+    }
+    else
+    {
+        <div class="log-entries">
+            @foreach (var entry in _logEntries)
+            {
+                <div class="log-entry @GetCssClass(entry.Type)">
+                    <span class="log-time">@FormatTime(entry.GameTick)</span>
+                    <span class="log-message">@entry.Message</span>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private List<ProtoEngine.Components.ActionLogEntry> _logEntries = new();
+
+    public void Refresh()
+    {
+        _logEntries.Clear();
+        if (Host.Session?.State?.Player is null) return;
+
+        var actionLog = Host.Session.State.Player.Get<ProtoEngine.Components.ActionLogComponent>();
+        if (actionLog is not null)
+        {
+            // Show most recent 30 entries, in reverse chronological order
+            _logEntries = actionLog.Entries.TakeLast(30).Reverse().ToList();
+        }
+        StateHasChanged();
+    }
+
+    private string GetCssClass(ProtoEngine.Components.ActionLogType type)
+    {
+        return type switch
+        {
+            ProtoEngine.Components.ActionLogType.Movement => "log-movement",
+            ProtoEngine.Components.ActionLogType.Combat => "log-combat",
+            ProtoEngine.Components.ActionLogType.Item => "log-item",
+            ProtoEngine.Components.ActionLogType.Interaction => "log-interaction",
+            ProtoEngine.Components.ActionLogType.System => "log-system",
+            _ => ""
+        };
+    }
+
+    private string FormatTime(int tick)
+    {
+        var day = (tick / 24) + 1;
+        var hour = tick % 24;
+        return $"D{day}:{hour:D2}";
+    }
+}

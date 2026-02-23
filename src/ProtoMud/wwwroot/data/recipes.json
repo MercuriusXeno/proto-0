@@ -1,0 +1,9 @@
+[
+  {
+    "id": "herbal_remedy_recipe",
+    "name": "Herbal Remedy",
+    "description": "Combine a healing herb and a health potion to create a powerful herbal remedy.",
+    "ingredientIds": ["herb", "health_potion"],
+    "resultItemId": "herbal_remedy"
+  }
+]

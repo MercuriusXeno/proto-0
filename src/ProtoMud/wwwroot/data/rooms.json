@@ -1,0 +1,90 @@
+[
+  {
+    "id": "town_square",
+    "name": "Town Square",
+    "description": "You stand in the heart of a small frontier town. Cobblestones stretch beneath your feet, worn smooth by countless travelers. A weathered fountain gurgles at the center, its water dark and cold. Buildings crowd the edges — a tavern to the north, a general store to the east, and a shadowed alley to the south. The town gate lies to the west.",
+    "exits": { "north": "tavern", "east": "general_store", "south": "dark_alley", "west": "town_gate" },
+    "itemIds": ["rusty_sword"],
+    "npcIds": ["old_merchant"]
+  },
+  {
+    "id": "tavern",
+    "name": "The Rusty Flagon Tavern",
+    "description": "Warmth and the smell of roasting meat wash over you as you step inside. The tavern is dimly lit by oil lamps hanging from low rafters. A bard strums a melancholy tune in the corner. The barkeep polishes a glass behind a scarred wooden counter. A staircase leads up to the rooms above.",
+    "exits": { "south": "town_square", "up": "tavern_rooms" },
+    "itemIds": ["health_potion"],
+    "npcIds": ["barkeep"]
+  },
+  {
+    "id": "tavern_rooms",
+    "name": "Tavern - Upper Rooms",
+    "description": "A narrow hallway with three doors. The floorboards creak under your weight. A dusty window at the end lets in pale light. Most doors are locked, but one stands slightly ajar.",
+    "exits": { "down": "tavern" },
+    "itemIds": [],
+    "npcIds": []
+  },
+  {
+    "id": "general_store",
+    "name": "General Store",
+    "description": "Shelves line every wall, crammed with an eclectic assortment of goods — rope, lanterns, dried provisions, and curious trinkets. The air smells of leather and sawdust. A glass display case holds a few items of particular interest.",
+    "exits": { "west": "town_square" },
+    "itemIds": ["leather_armor", "torch"],
+    "npcIds": []
+  },
+  {
+    "id": "dark_alley",
+    "name": "Dark Alley",
+    "description": "The alley narrows quickly, flanked by crumbling brick walls slick with moisture. Refuse litters the ground. The shadows here feel almost alive. Something skitters in the darkness ahead. A passage continues south to the old cemetery.",
+    "exits": { "north": "town_square", "south": "cemetery" },
+    "itemIds": [],
+    "npcIds": ["giant_rat"]
+  },
+  {
+    "id": "cemetery",
+    "name": "Old Cemetery",
+    "description": "Crooked headstones jut from overgrown earth like broken teeth. A low mist clings to the ground. An ancient iron fence surrounds the grounds, its gate hanging by one hinge. The air is cold and still. Something feels deeply wrong here.",
+    "exits": { "north": "dark_alley", "east": "crypt_entrance" },
+    "itemIds": ["iron_key"],
+    "npcIds": ["skeleton"]
+  },
+  {
+    "id": "crypt_entrance",
+    "name": "Crypt Entrance",
+    "description": "A heavy stone door, partially open, reveals stairs descending into darkness. Cold air rises from below, carrying the scent of damp earth and something older. Faded runes are carved into the lintel above.",
+    "exits": { "west": "cemetery" },
+    "itemIds": [],
+    "npcIds": []
+  },
+  {
+    "id": "town_gate",
+    "name": "Town Gate",
+    "description": "The town gate is a sturdy wooden structure reinforced with iron bands. Beyond it, a dirt road winds through rolling hills toward the distant forest. Guards lean against the walls, looking bored. A notice board stands beside the gate, covered in postings.",
+    "exits": { "east": "town_square", "west": "forest_path" },
+    "itemIds": [],
+    "npcIds": ["gate_guard"]
+  },
+  {
+    "id": "forest_path",
+    "name": "Forest Path",
+    "description": "Tall oaks and elms arch overhead, their branches intertwined to form a green canopy. Dappled sunlight filters through the leaves. The path is narrow but well-worn. Birdsong fills the air, though it grows quieter the deeper you go. The path splits ahead — north toward a clearing, south into deeper woods.",
+    "exits": { "east": "town_gate", "north": "forest_clearing", "south": "deep_woods" },
+    "itemIds": ["herb"],
+    "npcIds": []
+  },
+  {
+    "id": "forest_clearing",
+    "name": "Forest Clearing",
+    "description": "A peaceful circular clearing bathed in sunlight. Wildflowers dot the tall grass. A moss-covered stone sits at the center — perhaps an old altar or waymarker. The trees form a natural wall around this serene place.",
+    "exits": { "south": "forest_path" },
+    "itemIds": ["glowing_stone"],
+    "npcIds": ["forest_hermit"]
+  },
+  {
+    "id": "deep_woods",
+    "name": "Deep Woods",
+    "description": "The forest grows dark and dense. Ancient trees tower above, their trunks wider than a man's armspan. Strange fungi glow faintly on rotting logs. The undergrowth is thick and the air humid. Something watches from the shadows.",
+    "exits": { "north": "forest_path" },
+    "itemIds": [],
+    "npcIds": ["wolf"]
+  }
+]

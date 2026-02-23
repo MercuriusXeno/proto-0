@@ -1,0 +1,39 @@
+@inject GameSessionHost Host
+
+<div class="quest-panel panel">
+    <h3>Quests</h3>
+    @if (_questLines.Count == 0)
+    {
+        <div class="quest-empty">No active quests</div>
+    }
+    else
+    {
+        @foreach (var line in _questLines)
+        {
+            <div class="quest-line">@line</div>
+        }
+    }
+</div>
+
+@code {
+    private List<string> _questLines = new();
+
+    public void Refresh()
+    {
+        _questLines.Clear();
+        if (Host.Quest is null) return;
+
+        var active = Host.Quest.GetActiveQuestDetails();
+        foreach (var (quest, aq) in active)
+        {
+            _questLines.Add(quest.Name);
+            foreach (var obj in quest.Objectives)
+            {
+                var progress = aq.Progress.GetValueOrDefault(obj.Id);
+                var check = progress >= obj.RequiredCount ? "[x]" : "[ ]";
+                _questLines.Add($"  {check} {obj.Description}");
+            }
+        }
+        StateHasChanged();
+    }
+}

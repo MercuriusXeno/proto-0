@@ -1,0 +1,16 @@
+<div class="action-bar">
+    <button class="action-btn" @onclick='() => SendCommand("look")'>Look</button>
+    <button class="action-btn" @onclick='() => SendCommand("inventory")'>Inventory</button>
+    <button class="action-btn" @onclick='() => SendCommand("status")'>Status</button>
+    <button class="action-btn" @onclick='() => SendCommand("quest")'>Quests</button>
+    <button class="action-btn" @onclick='() => SendCommand("help")'>Help</button>
+</div>
+
+@code {
+    [Parameter] public EventCallback<string> OnAction { get; set; }
+
+    private async Task SendCommand(string command)
+    {
+        await OnAction.InvokeAsync(command);
+    }
+}

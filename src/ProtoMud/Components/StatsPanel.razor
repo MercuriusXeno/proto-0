@@ -1,0 +1,57 @@
+@inject GameSessionHost Host
+@using ProtoEngine.Components
+
+<div class="stats-panel panel">
+    <h3>Character</h3>
+    @if (_health is not null && _stats is not null)
+    {
+        <div class="stat-row">
+            <span class="stat-label">HP</span>
+            <div class="hp-bar">
+                <div class="hp-fill" style="width: @HpPercent%"></div>
+            </div>
+            <span class="stat-value">@_health.Current/@_health.Max</span>
+        </div>
+        <div class="stat-row">
+            <span class="stat-label">Level</span>
+            <span class="stat-value">@_stats.Level</span>
+        </div>
+        <div class="stat-row">
+            <span class="stat-label">XP</span>
+            <span class="stat-value">@_stats.Experience/@_stats.ExperienceToNextLevel</span>
+        </div>
+        <div class="stat-row">
+            <span class="stat-label">STR</span>
+            <span class="stat-value">@_stats.Strength</span>
+        </div>
+        <div class="stat-row">
+            <span class="stat-label">DEX</span>
+            <span class="stat-value">@_stats.Dexterity</span>
+        </div>
+        <div class="stat-row">
+            <span class="stat-label">INT</span>
+            <span class="stat-value">@_stats.Intelligence</span>
+        </div>
+        <div class="stat-row">
+            <span class="stat-label">Gold</span>
+            <span class="stat-value">@_stats.Gold</span>
+        </div>
+    }
+</div>
+
+@code {
+    private HealthComponent? _health;
+    private StatsComponent? _stats;
+
+    private int HpPercent => _health is not null && _health.Max > 0
+        ? (int)(100.0 * _health.Current / _health.Max)
+        : 0;
+
+    public void Refresh()
+    {
+        if (Host.State is null) return;
+        _health = Host.State.Player.Get<HealthComponent>();
+        _stats = Host.State.Player.Get<StatsComponent>();
+        StateHasChanged();
+    }
+}

@@ -1,0 +1,86 @@
+[
+  {
+    "id": "old_merchant",
+    "name": "Old Merchant",
+    "description": "A weathered old man in a patched cloak, leaning on a gnarled staff.",
+    "behavior": "idle",
+    "isHostile": false,
+    "dialogueId": "merchant_dialogue",
+    "health": 40,
+    "attackPower": 2,
+    "defense": 1,
+    "experienceReward": 10
+  },
+  {
+    "id": "barkeep",
+    "name": "Barkeep",
+    "description": "A burly woman with strong arms and a no-nonsense expression.",
+    "behavior": "merchant",
+    "isHostile": false,
+    "dialogueId": "barkeep_dialogue",
+    "health": 60,
+    "attackPower": 5,
+    "defense": 3,
+    "experienceReward": 15
+  },
+  {
+    "id": "giant_rat",
+    "name": "Giant Rat",
+    "description": "A rat the size of a dog, with matted fur and yellow fangs.",
+    "behavior": "hostile",
+    "isHostile": true,
+    "dialogueId": "",
+    "health": 25,
+    "attackPower": 4,
+    "defense": 1,
+    "experienceReward": 20
+  },
+  {
+    "id": "skeleton",
+    "name": "Skeleton",
+    "description": "An animated skeleton clutching a rusted blade. Its eye sockets glow with pale fire.",
+    "behavior": "hostile",
+    "isHostile": true,
+    "dialogueId": "",
+    "health": 40,
+    "attackPower": 7,
+    "defense": 3,
+    "experienceReward": 40
+  },
+  {
+    "id": "gate_guard",
+    "name": "Gate Guard",
+    "description": "A bored-looking guard in chainmail, idly picking at his nails.",
+    "behavior": "idle",
+    "isHostile": false,
+    "dialogueId": "guard_dialogue",
+    "health": 80,
+    "attackPower": 10,
+    "defense": 8,
+    "experienceReward": 50
+  },
+  {
+    "id": "forest_hermit",
+    "name": "Forest Hermit",
+    "description": "An elderly hermit in tattered robes, eyes bright with hidden knowledge.",
+    "behavior": "idle",
+    "isHostile": false,
+    "dialogueId": "hermit_dialogue",
+    "health": 30,
+    "attackPower": 3,
+    "defense": 1,
+    "experienceReward": 15
+  },
+  {
+    "id": "wolf",
+    "name": "Wolf",
+    "description": "A large grey wolf with intelligent eyes and bared teeth.",
+    "behavior": "hostile",
+    "isHostile": true,
+    "dialogueId": "",
+    "health": 35,
+    "attackPower": 6,
+    "defense": 2,
+    "experienceReward": 30
+  }
+]

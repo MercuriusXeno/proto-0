@@ -1,0 +1,47 @@
+[
+  {
+    "id": "rat_problem",
+    "name": "The Rat Problem",
+    "description": "The town has a rat infestation in the dark alley. Eliminate the giant rat.",
+    "objectives": [
+      {
+        "id": "kill_rat",
+        "description": "Kill the Giant Rat in the dark alley",
+        "type": "kill",
+        "targetId": "giant_rat",
+        "requiredCount": 1
+      }
+    ],
+    "reward": {
+      "experience": 50,
+      "gold": 10,
+      "itemIds": []
+    }
+  },
+  {
+    "id": "hermit_herbs",
+    "name": "The Hermit's Request",
+    "description": "The forest hermit needs a healing herb from the forest path.",
+    "objectives": [
+      {
+        "id": "collect_herb",
+        "description": "Collect a Healing Herb from the forest",
+        "type": "collect",
+        "targetId": "herb",
+        "requiredCount": 1
+      },
+      {
+        "id": "visit_hermit",
+        "description": "Visit the Forest Hermit in the clearing",
+        "type": "visit",
+        "targetId": "forest_clearing",
+        "requiredCount": 1
+      }
+    ],
+    "reward": {
+      "experience": 75,
+      "gold": 15,
+      "itemIds": ["herbal_remedy"]
+    }
+  }
+]

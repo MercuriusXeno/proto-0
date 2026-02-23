@@ -1,0 +1,61 @@
+@page "/"
+@inject NavigationManager Nav
+@inject GameSessionHost Host
+@using ProtoEngine.Persistence
+
+<PageTitle>Proto-0: MUD</PageTitle>
+
+<div class="title-screen">
+    <div class="title-art">
+        <pre>
+ ____            _              ___
+|  _ \ _ __ ___ | |_ ___       / _ \
+| |_) | '__/ _ \| __/ _ \ ____| | | |
+|  __/| | | (_) | || (_) |____| |_| |
+|_|   |_|  \___/ \__\___/      \___/
+        </pre>
+        <p class="subtitle">A Text Adventure</p>
+    </div>
+
+    <div class="title-menu">
+        <button class="menu-btn" @onclick="NewGame">New Game</button>
+        <button class="menu-btn" @onclick="LoadGame" disabled="@(!_hasSave)">Continue</button>
+    </div>
+
+    @if (_loading)
+    {
+        <div class="loading-text">Loading...</div>
+    }
+</div>
+
+@code {
+    private bool _hasSave;
+    private bool _loading;
+
+    [Inject] private ISaveLoadService SaveService { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var save = await SaveService.LoadAsync();
+        _hasSave = save is not null;
+    }
+
+    private async Task NewGame()
+    {
+        _loading = true;
+        StateHasChanged();
+        await Host.InitializeAsync();
+        Nav.NavigateTo("/game");
+    }
+
+    private async Task LoadGame()
+    {
+        _loading = true;
+        StateHasChanged();
+        await Host.InitializeAsync();
+        var save = await SaveService.LoadAsync();
+        if (save is not null)
+            Host.RestoreFromSave(save);
+        Nav.NavigateTo("/game");
+    }
+}

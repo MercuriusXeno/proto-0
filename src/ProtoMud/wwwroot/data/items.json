@@ -1,0 +1,82 @@
+[
+  {
+    "id": "rusty_sword",
+    "name": "Rusty Sword",
+    "description": "A battered short sword with a pitted blade. Still sharp enough to cut.",
+    "type": "weapon",
+    "attackBonus": 3,
+    "defenseBonus": 0,
+    "healAmount": 0,
+    "isPickable": true
+  },
+  {
+    "id": "health_potion",
+    "name": "Health Potion",
+    "description": "A small vial of crimson liquid that shimmers faintly.",
+    "type": "consumable",
+    "attackBonus": 0,
+    "defenseBonus": 0,
+    "healAmount": 30,
+    "isPickable": true
+  },
+  {
+    "id": "leather_armor",
+    "name": "Leather Armor",
+    "description": "Supple leather armor that offers modest protection.",
+    "type": "armor",
+    "attackBonus": 0,
+    "defenseBonus": 4,
+    "healAmount": 0,
+    "isPickable": true
+  },
+  {
+    "id": "torch",
+    "name": "Torch",
+    "description": "A sturdy wooden torch wrapped in oil-soaked cloth.",
+    "type": "misc",
+    "attackBonus": 0,
+    "defenseBonus": 0,
+    "healAmount": 0,
+    "isPickable": true
+  },
+  {
+    "id": "iron_key",
+    "name": "Iron Key",
+    "description": "A heavy iron key with an ornate bow. It must open something important.",
+    "type": "key",
+    "attackBonus": 0,
+    "defenseBonus": 0,
+    "healAmount": 0,
+    "isPickable": true
+  },
+  {
+    "id": "herb",
+    "name": "Healing Herb",
+    "description": "A fragrant green herb known for its restorative properties.",
+    "type": "misc",
+    "attackBonus": 0,
+    "defenseBonus": 0,
+    "healAmount": 0,
+    "isPickable": true
+  },
+  {
+    "id": "glowing_stone",
+    "name": "Glowing Stone",
+    "description": "A smooth stone that pulses with a faint inner light.",
+    "type": "misc",
+    "attackBonus": 0,
+    "defenseBonus": 0,
+    "healAmount": 0,
+    "isPickable": true
+  },
+  {
+    "id": "herbal_remedy",
+    "name": "Herbal Remedy",
+    "description": "A poultice made from healing herbs. Restores a moderate amount of health.",
+    "type": "consumable",
+    "attackBonus": 0,
+    "defenseBonus": 0,
+    "healAmount": 50,
+    "isPickable": true
+  }
+]

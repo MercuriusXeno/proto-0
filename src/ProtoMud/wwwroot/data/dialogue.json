@@ -1,0 +1,80 @@
+[
+  {
+    "id": "merchant_dialogue",
+    "nodes": [
+      {
+        "id": "start",
+        "text": "Ah, a new face in town! Be careful out there, adventurer. The dark alley to the south is crawling with vermin. The barkeep might have work for you, too.",
+        "choices": [
+          { "text": "Tell me about the alley.", "nextNodeId": "alley_info" },
+          { "text": "Thanks for the tip.", "nextNodeId": "" }
+        ],
+        "questToGive": null
+      },
+      {
+        "id": "alley_info",
+        "text": "Giant rats have been breeding down there. Nasty things. Someone needs to clear them out before they start biting the townsfolk.",
+        "choices": [
+          { "text": "I'll handle it.", "nextNodeId": "" }
+        ],
+        "questToGive": "rat_problem"
+      }
+    ]
+  },
+  {
+    "id": "barkeep_dialogue",
+    "nodes": [
+      {
+        "id": "start",
+        "text": "What'll it be? We've got ale and stew. If you're looking for trouble, you've come to the right town.",
+        "choices": [
+          { "text": "Any rumors?", "nextNodeId": "rumors" },
+          { "text": "Just passing through.", "nextNodeId": "" }
+        ],
+        "questToGive": null
+      },
+      {
+        "id": "rumors",
+        "text": "They say the old cemetery south of the alley has been... restless. Bones rattling, lights in the crypt. I'd stay clear if I were you. But you don't look like the cautious type.",
+        "choices": [
+          { "text": "I'll check it out.", "nextNodeId": "" }
+        ],
+        "questToGive": null
+      }
+    ]
+  },
+  {
+    "id": "guard_dialogue",
+    "nodes": [
+      {
+        "id": "start",
+        "text": "The road west leads into the forest. It's safe enough by day, but I wouldn't wander too deep. Wolves, you know. And stranger things.",
+        "choices": [
+          { "text": "I can handle myself.", "nextNodeId": "" },
+          { "text": "Thanks for the warning.", "nextNodeId": "" }
+        ],
+        "questToGive": null
+      }
+    ]
+  },
+  {
+    "id": "hermit_dialogue",
+    "nodes": [
+      {
+        "id": "start",
+        "text": "Ah... a visitor. I don't get many of those. These old bones need a healing herb, but I can no longer make the journey to find one. Would you bring me one? I could make it worth your while.",
+        "choices": [
+          { "text": "I'll find one for you.", "nextNodeId": "accept" },
+          { "text": "Maybe later.", "nextNodeId": "" }
+        ],
+        "questToGive": null
+      },
+      {
+        "id": "accept",
+        "text": "Bless you, child. Look along the forest paths — the herbs grow where the light breaks through the canopy.",
+        "choices": [],
+        "questToGive": "hermit_herbs"
+      }
+    ]
+  }
+]

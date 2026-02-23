@@ -1,0 +1,149 @@
+@inject GameSessionHost Host
+@using ProtoEngine.Commands
+
+<div class="terminal">
+    <div class="terminal-output" @ref="_outputRef">
+        @foreach (var line in _outputLines)
+        {
+            <div class="terminal-line @(line.CssClass)">@line.Text</div>
+        }
+    </div>
+    <div class="terminal-input-row">
+        <span class="terminal-prompt">&gt;</span>
+        <input @ref="_inputRef"
+               class="terminal-input"
+               type="text"
+               @bind="_currentInput"
+               @bind:event="oninput"
+               @onkeydown="HandleKeyDown"
+               placeholder="Enter a command..."
+               autocomplete="off"
+               spellcheck="false" />
+    </div>
+</div>
+
+@code {
+    [Parameter] public EventCallback OnCommandExecuted { get; set; }
+
+    private ElementReference _outputRef;
+    private ElementReference _inputRef;
+    private string _currentInput = "";
+    private readonly List<TerminalLine> _outputLines = new();
+    private readonly List<string> _commandHistory = new();
+    private int _historyIndex = -1;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await _inputRef.FocusAsync();
+        }
+    }
+
+    public void WriteLines(IEnumerable<string> lines, string cssClass = "")
+    {
+        foreach (var line in lines)
+            _outputLines.Add(new TerminalLine(line, cssClass));
+        StateHasChanged();
+    }
+
+    public void WriteSystem(string text)
+    {
+        _outputLines.Add(new TerminalLine(text, "system"));
+        StateHasChanged();
+    }
+
+    public void Clear()
+    {
+        _outputLines.Clear();
+        StateHasChanged();
+    }
+
+    public void SetContent(IEnumerable<string> lines, string cssClass = "")
+    {
+        _outputLines.Clear();
+        foreach (var line in lines)
+            _outputLines.Add(new TerminalLine(line, cssClass));
+        StateHasChanged();
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !string.IsNullOrWhiteSpace(_currentInput))
+        {
+            var input = _currentInput.Trim();
+            _currentInput = "";
+
+            _commandHistory.Add(input);
+            _historyIndex = _commandHistory.Count;
+
+            var result = await Host.ProcessCommandAsync(input);
+
+            // Clear terminal for room-viewing commands
+            var commandLower = input.ToLowerInvariant();
+            var isRoomCommand = commandLower.StartsWith("look") || commandLower.StartsWith("l ") || commandLower == "l" ||
+                               commandLower.StartsWith("go") || commandLower.StartsWith("move") ||
+                               commandLower is "north" or "south" or "east" or "west" or "up" or "down" or
+                               "n" or "s" or "e" or "w" or "u" or "d";
+
+            if (isRoomCommand)
+            {
+                _outputLines.Clear();
+                var cssClass = result.Success ? "" : "error";
+                foreach (var line in result.Output)
+                    _outputLines.Add(new TerminalLine(line, cssClass));
+            }
+            else
+            {
+                _outputLines.Add(new TerminalLine($"> {input}", "command-echo"));
+                var cssClass = result.Success ? "" : "error";
+                foreach (var line in result.Output)
+                    _outputLines.Add(new TerminalLine(line, cssClass));
+                _outputLines.Add(new TerminalLine("", ""));
+            }
+
+            await OnCommandExecuted.InvokeAsync();
+            StateHasChanged();
+
+            await ScrollToBottom();
+        }
+        else if (e.Key == "ArrowUp")
+        {
+            if (_commandHistory.Count > 0 && _historyIndex > 0)
+            {
+                _historyIndex--;
+                _currentInput = _commandHistory[_historyIndex];
+            }
+        }
+        else if (e.Key == "ArrowDown")
+        {
+            if (_historyIndex < _commandHistory.Count - 1)
+            {
+                _historyIndex++;
+                _currentInput = _commandHistory[_historyIndex];
+            }
+            else
+            {
+                _historyIndex = _commandHistory.Count;
+                _currentInput = "";
+            }
+        }
+    }
+
+    private async Task ScrollToBottom()
+    {
+        try
+        {
+            await Task.Yield();
+            // Scroll handled by CSS overflow + JS interop fallback
+        }
+        catch { }
+    }
+
+    public async Task FocusInput()
+    {
+        await _inputRef.FocusAsync();
+    }
+
+    private record TerminalLine(string Text, string CssClass);
+}

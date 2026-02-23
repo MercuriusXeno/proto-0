@@ -1,0 +1,94 @@
+@page "/game"
+@inject GameSessionHost Host
+@inject NavigationManager Nav
+
+<PageTitle>Proto-0</PageTitle>
+
+@if (!Host.IsInitialized)
+{
+    <div class="loading-text">Redirecting...</div>
+}
+else
+{
+    <div class="game-layout">
+        <div class="sidebar-left">
+            <StatsPanel @ref="_statsPanel" />
+            <MapPanel @ref="_mapPanel" OnNavigate="HandleAction" />
+        </div>
+
+        <div class="main-area">
+            <Terminal @ref="_terminal" OnCommandExecuted="RefreshPanels" />
+            <ActionBar OnAction="HandleAction" />
+        </div>
+
+        <div class="sidebar-right">
+            <ActionLogPanel @ref="_actionLogPanel" />
+        </div>
+    </div>
+}
+
+@code {
+    private Terminal? _terminal;
+    private StatsPanel? _statsPanel;
+    private MapPanel? _mapPanel;
+    private ActionLogPanel? _actionLogPanel;
+
+    protected override void OnInitialized()
+    {
+        if (!Host.IsInitialized)
+            Nav.NavigateTo("/");
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && Host.IsInitialized && _terminal is not null)
+        {
+            // Show initial room description
+            var result = await Host.ProcessCommandAsync("look");
+            _terminal.Clear();
+            _terminal.WriteLines(result.Output);
+            _terminal.WriteLines(new[] { "" });
+            _terminal.WriteSystem("Type 'help' for a list of commands.");
+            RefreshPanels();
+            StateHasChanged();
+        }
+    }
+
+    private async Task HandleAction(string command)
+    {
+        if (_terminal is null) return;
+
+        var result = await Host.ProcessCommandAsync(command);
+
+        // Clear terminal for room-viewing commands (look, move)
+        var commandLower = command.Trim().ToLowerInvariant();
+        var isRoomCommand = commandLower.StartsWith("look") || commandLower.StartsWith("l ") || commandLower == "l" ||
+                           commandLower.StartsWith("go") || commandLower.StartsWith("move") ||
+                           commandLower is "north" or "south" or "east" or "west" or "up" or "down" or
+                           "n" or "s" or "e" or "w" or "u" or "d";
+
+        if (isRoomCommand)
+        {
+            _terminal.Clear();
+            var cssClass = result.Success ? "" : "error";
+            _terminal.WriteLines(result.Output, cssClass);
+        }
+        else
+        {
+            _terminal.WriteLines(new[] { $"> {command}" }, "command-echo");
+            var cssClass = result.Success ? "" : "error";
+            _terminal.WriteLines(result.Output, cssClass);
+            _terminal.WriteLines(new[] { "" });
+        }
+
+        RefreshPanels();
+        await _terminal.FocusInput();
+    }
+
+    private void RefreshPanels()
+    {
+        _statsPanel?.Refresh();
+        _mapPanel?.Refresh();
+        _actionLogPanel?.Refresh();
+    }
+}

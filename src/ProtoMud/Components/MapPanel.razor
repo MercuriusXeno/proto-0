@@ -1,0 +1,37 @@
+@inject GameSessionHost Host
+@using ProtoEngine.Components
+@using ProtoEngine.Data
+
+<div class="map-panel panel">
+    <h3>Exits</h3>
+    @if (_currentRoom is not null)
+    {
+        <div class="room-name">@_currentRoom.Name</div>
+        <div class="exits-grid">
+            @foreach (var exit in _currentRoom.Exits)
+            {
+                <button class="exit-btn" @onclick="() => Navigate(exit.Key)">
+                    @exit.Key.ToUpperInvariant()
+                </button>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public EventCallback<string> OnNavigate { get; set; }
+
+    private RoomData? _currentRoom;
+
+    public void Refresh()
+    {
+        if (Host.World is null || Host.State is null) return;
+        _currentRoom = Host.World.GetPlayerRoom(Host.State);
+        StateHasChanged();
+    }
+
+    private async Task Navigate(string direction)
+    {
+        await OnNavigate.InvokeAsync($"go {direction}");
+    }
+}
