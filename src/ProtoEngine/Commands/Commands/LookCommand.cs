@@ -7,17 +7,15 @@ public class LookCommand : ICommand
 {
     private readonly WorldSystem _world;
     private readonly InventorySystem _inventory;
-    private readonly NarrativeSystem _narrative;
 
     public string Verb => "look";
     public string[] Aliases => ["l", "examine"];
     public string Description => "Look around the current room or examine something";
 
-    public LookCommand(WorldSystem world, InventorySystem inventory, NarrativeSystem narrative)
+    public LookCommand(WorldSystem world, InventorySystem inventory)
     {
         _world = world;
         _inventory = inventory;
-        _narrative = narrative;
     }
 
     public CommandResult Execute(CommandContext context, string[] args)
@@ -28,7 +26,6 @@ public class LookCommand : ICommand
 
         var lines = new List<OutputLine>();
         lines.Add(OutputLine.Plain($"== {room.Name} =="));
-        lines.Add(OutputLine.Plain(_narrative.GetTimeDescription(context.State.Clock)));
         lines.Add(OutputLine.Plain(""));
         lines.Add(OutputLine.Plain(room.Description));
 

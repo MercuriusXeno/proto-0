@@ -27,7 +27,6 @@ public class GameSessionHost
     public NpcSystem? Npc { get; private set; }
     public QuestSystem? Quest { get; private set; }
     public CraftingSystem? Crafting { get; private set; }
-    public NarrativeSystem? Narrative { get; private set; }
     public ActionLogSystem? ActionLog { get; private set; }
 
     public GameSession? Session => _session;
@@ -71,7 +70,6 @@ public class GameSessionHost
         Npc = new NpcSystem(_content, eventBus);
         Quest = new QuestSystem(_content, eventBus);
         Crafting = new CraftingSystem(_content, eventBus);
-        Narrative = new NarrativeSystem(eventBus);
         ActionLog = new ActionLogSystem();
         var statusEffects = new StatusEffectSystem();
         var time = new TimeSystem();
@@ -87,14 +85,13 @@ public class GameSessionHost
         _session.RegisterSystem(Npc);
         _session.RegisterSystem(Quest);
         _session.RegisterSystem(Crafting);
-        _session.RegisterSystem(Narrative);
         _session.RegisterSystem(ActionLog);
         _session.RegisterSystem(statusEffects);
         _session.RegisterSystem(time);
         _session.RegisterSystem(events);
 
         // Register commands
-        registry.Register(new LookCommand(World, Inventory, Narrative));
+        registry.Register(new LookCommand(World, Inventory));
         registry.Register(new MoveCommand(World, ActionLog));
         registry.Register(new InventoryCommand(Inventory));
         registry.Register(new TakeCommand(Inventory, ActionLog));
