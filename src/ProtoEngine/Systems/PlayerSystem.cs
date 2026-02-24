@@ -22,6 +22,7 @@ public class PlayerSystem : IGameSystem
         if (!player.Has<EquipmentComponent>()) player.Add(new EquipmentComponent());
         if (!player.Has<CombatComponent>()) player.Add(new CombatComponent());
         if (!player.Has<PositionComponent>()) player.Add(new PositionComponent());
+        if (!player.Has<ExerciseComponent>()) player.Add(new ExerciseComponent());
         if (!player.Has<StatusEffectsComponent>()) player.Add(new StatusEffectsComponent());
         if (!player.Has<DescriptionComponent>())
             player.Add(new DescriptionComponent { Name = "Adventurer", ShortDescription = "A brave adventurer" });

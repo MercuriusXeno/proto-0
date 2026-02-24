@@ -28,6 +28,7 @@ public class GameSessionHost
     public QuestSystem? Quest { get; private set; }
     public CraftingSystem? Crafting { get; private set; }
     public ActionLogSystem? ActionLog { get; private set; }
+    public StatGrowthSystem? StatGrowth { get; private set; }
 
     public GameSession? Session => _session;
     public GameState? State => _session?.State;
@@ -71,6 +72,7 @@ public class GameSessionHost
         Quest = new QuestSystem(_content, eventBus);
         Crafting = new CraftingSystem(_content, eventBus);
         ActionLog = new ActionLogSystem();
+        StatGrowth = new StatGrowthSystem(eventBus);
         var statusEffects = new StatusEffectSystem();
         var time = new TimeSystem();
         var events = new EventSystem(eventBus);
@@ -86,6 +88,7 @@ public class GameSessionHost
         _session.RegisterSystem(Quest);
         _session.RegisterSystem(Crafting);
         _session.RegisterSystem(ActionLog);
+        _session.RegisterSystem(StatGrowth);
         _session.RegisterSystem(statusEffects);
         _session.RegisterSystem(time);
         _session.RegisterSystem(events);
@@ -137,6 +140,7 @@ public class GameSessionHost
         var stats = state.Player.Get<StatsComponent>();
         var inv = state.Player.Get<InventoryComponent>();
         var equip = state.Player.Get<EquipmentComponent>();
+        var exercise = state.Player.Get<ExerciseComponent>();
 
         return new SaveData
         {
@@ -149,9 +153,17 @@ public class GameSessionHost
             PlayerStrength = stats?.Strength ?? 10,
             PlayerDexterity = stats?.Dexterity ?? 10,
             PlayerIntelligence = stats?.Intelligence ?? 10,
+            PlayerFortitude = stats?.Fortitude ?? 10,
+            PlayerAgility = stats?.Agility ?? 10,
+            PlayerWillpower = stats?.Willpower ?? 10,
+            PlayerPerception = stats?.Perception ?? 10,
+            PlayerCharisma = stats?.Charisma ?? 10,
             PlayerGold = stats?.Gold ?? 0,
+            ExerciseProgress = exercise?.Progress != null
+                ? new Dictionary<StatType, double>(exercise.Progress)
+                : new(),
             InventoryItemIds = inv?.ItemIds.ToList() ?? new(),
-            WeaponId = equip?.GetSlotItem(EquipmentSlot.WieldRight)?.ItemId, // Save right hand wield for backwards compat
+            WeaponId = equip?.GetSlotItem(EquipmentSlot.WieldRight)?.ItemId,
             ArmorId = equip?.GetSlotItem(EquipmentSlot.Body)?.ItemId,
             SavedAt = DateTime.UtcNow
         };
@@ -177,7 +189,18 @@ public class GameSessionHost
             stats.Strength = save.PlayerStrength;
             stats.Dexterity = save.PlayerDexterity;
             stats.Intelligence = save.PlayerIntelligence;
+            stats.Fortitude = save.PlayerFortitude;
+            stats.Agility = save.PlayerAgility;
+            stats.Willpower = save.PlayerWillpower;
+            stats.Perception = save.PlayerPerception;
+            stats.Charisma = save.PlayerCharisma;
             stats.Gold = save.PlayerGold;
+        }
+
+        var exercise = state.Player.Get<ExerciseComponent>();
+        if (exercise is not null && save.ExerciseProgress.Count > 0)
+        {
+            exercise.Progress = new Dictionary<StatType, double>(save.ExerciseProgress);
         }
 
         var inv = state.Player.Get<InventoryComponent>();

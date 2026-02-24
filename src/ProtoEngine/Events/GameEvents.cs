@@ -1,3 +1,5 @@
+using ProtoEngine.Components;
+
 namespace ProtoEngine.Events;
 
 public record RoomEnteredEvent(string EntityId, string RoomId) : IGameEvent;
@@ -13,3 +15,5 @@ public record ObjectiveCompletedEvent(string QuestId, string ObjectiveId) : IGam
 public record DialogueStartedEvent(string NpcId) : IGameEvent;
 public record ItemCraftedEvent(string RecipeId) : IGameEvent;
 public record LevelUpEvent(string EntityId, int NewLevel) : IGameEvent;
+public record StatExercisedEvent(string EntityId, StatType Stat, double Amount) : IGameEvent;
+public record StatIncreasedEvent(string EntityId, StatType Stat, int OldValue, int NewValue) : IGameEvent;
