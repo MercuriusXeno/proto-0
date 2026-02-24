@@ -313,9 +313,51 @@ statGrowth.Exercise(context.State, StatType.Strength, 10.0);
 statGrowth.Exercise(context.State, StatType.Perception, 0.5);
 ```
 
+## Coding Standards
+
+### SOLID & Method Design
+- **Single Responsibility**: Each method does one thing. When a method exceeds ~25 lines, treat it as a smell and extract well-named helper methods.
+- **Self-Documenting Code**: Choose descriptive names for methods, variables, and parameters so the code reads clearly without inline comments. Avoid code comments — if logic isn't obvious from naming alone, rename or restructure until it is.
+- **XML Documentation**: Use `<summary>` XML docs on public and internal methods to describe *what* and *why*, not *how*. Skip XML docs on private methods unless the purpose is non-obvious from the name.
+- **No Dead Code**: Remove unused methods, variables, and using statements. Don't leave commented-out code.
+
+### Seams & Testability
+- **Internal over Private**: When extracting helper methods from a refactor, mark them `internal` rather than `private` so tests can exercise them directly.
+- **InternalsVisibleTo**: Both `ProtoEngine` and `ProtoMud` expose internals to their respective test projects (`ProtoEngine.Tests`, `ProtoMud.Tests`).
+- **Constructor Injection**: Systems and commands receive dependencies through constructors. Prefer injecting interfaces over concrete types where feasible.
+
+### General Conventions
+- **No Magic Numbers**: Extract constants or config values for thresholds, limits, and tuning parameters.
+- **Early Return**: Prefer guard clauses and early returns over deeply nested conditionals.
+- **Immutable Data Where Practical**: Use records for events, DTOs, and value objects. Components are mutable by design (ECS pattern).
+- **Naming**: PascalCase for public/internal members, camelCase for locals and parameters, `_camelCase` for private fields.
+
+## Testing
+
+### Test Projects
+- **ProtoEngine.Tests** (`tests/ProtoEngine.Tests/`): xUnit tests for core game logic — systems, commands, components, events
+- **ProtoMud.Tests** (`tests/ProtoMud.Tests/`): bUnit + xUnit tests for Blazor UI components
+
+### Running Tests
+```bash
+# All tests
+dotnet test
+
+# Specific project
+dotnet test tests/ProtoEngine.Tests
+dotnet test tests/ProtoMud.Tests
+```
+
+### Test Conventions
+- Test class naming: `{ClassUnderTest}Tests` (e.g., `StatGrowthSystemTests`)
+- Test method naming: `MethodName_Scenario_ExpectedResult` (e.g., `Exercise_ExceedsThreshold_IncrementsStat`)
+- Arrange/Act/Assert structure
+- One assertion concept per test (multiple asserts are fine if they verify the same logical outcome)
+
 ## Dependencies
 
 - .NET 9.0
 - Blazor WebAssembly
 - Blazored.LocalStorage (for save/load persistence)
 - No external game frameworks - custom ECS implementation
+- xUnit, bUnit (test projects only)

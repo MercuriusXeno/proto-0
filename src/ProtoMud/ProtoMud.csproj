@@ -16,4 +16,8 @@
     <ProjectReference Include="..\ProtoEngine\ProtoEngine.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="ProtoMud.Tests" />
+  </ItemGroup>
+
 </Project>
