@@ -339,8 +339,16 @@ statGrowth.Exercise(context.State, StatType.Perception, 0.5);
 ## Testing
 
 ### Test Projects
-- **ProtoEngine.Tests** (`tests/ProtoEngine.Tests/`): xUnit tests for core game logic — systems, commands, components, events
-- **ProtoMud.Tests** (`tests/ProtoMud.Tests/`): bUnit + xUnit tests for Blazor UI components
+- **ProtoEngine.Tests** (`tests/ProtoEngine.Tests/`): xUnit, 184 tests
+  - Commands: CommandClassifierTests, CommandParserTests, CommandRegistryTests, LookCommandTests, MoveCommandTests, StatusCommandTests
+  - Components: StatsComponentTests, ExerciseComponentTests
+  - Core: EntityTests, GameStateTests, GameClockTests
+  - Events: EventBusTests
+  - Persistence: SaveDataRoundTripTests
+  - Session: GameSessionTests
+  - Systems: StatGrowthSystemTests
+- **ProtoMud.Tests** (`tests/ProtoMud.Tests/`): bUnit + xUnit, 8 tests
+  - Components: EntityButtonTests
 
 ### Running Tests
 ```bash

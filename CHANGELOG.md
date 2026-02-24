@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ## [Unreleased]
 
 ### Added
+- Unit tests for P2 extracted internal static methods: CommandClassifierTests, LookCommandTests (BuildItemLines/BuildNpcLines/BuildExitLines/GetArticle), MoveCommandTests (ResolveDirection), StatusCommandTests (ToAbbreviation) — 81 new tests (103 → 184 engine tests)
 - `CommandClassifier` static class for centralized command type classification (look vs navigation vs other)
 - `SaveDataMapper` class extracting save/load property mapping out of GameSessionHost
 - Exercise-based stat growth system with geometric compounding thresholds (`StatGrowthSystem`)

@@ -43,7 +43,7 @@ proto-0/
 │       ├── Services/     # Game session hosting
 │       └── wwwroot/      # Static assets and game content (JSON)
 ├── tests/
-│   ├── ProtoEngine.Tests/  # xUnit tests for core game logic (95 tests)
+│   ├── ProtoEngine.Tests/  # xUnit tests for core game logic (184 tests)
 │   └── ProtoMud.Tests/     # bUnit + xUnit tests for Blazor UI (8 tests)
 └── CLAUDE.md             # Development guide for contributors
 ```
