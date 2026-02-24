@@ -37,10 +37,12 @@ public class StatusCommand : ICommand
 
             lines.Add("");
             lines.Add("Wearing:");
-            var torso = equipment.GetSlotItems(EquipmentSlot.UpperTorso).FirstOrDefault();
-            var hands = equipment.GetSlotItems(EquipmentSlot.Hand).FirstOrDefault();
-            lines.Add($"  Armor:     {torso?.ItemName ?? "(none)"}");
-            lines.Add($"  Gloves:    {hands?.ItemName ?? "(none)"}");
+            var body = equipment.GetSlotItems(EquipmentSlot.Body).FirstOrDefault();
+            var leftGlove = equipment.GetSlotItems(EquipmentSlot.LeftHand).FirstOrDefault();
+            var rightGlove = equipment.GetSlotItems(EquipmentSlot.RightHand).FirstOrDefault();
+            lines.Add($"  Armor:       {body?.ItemName ?? "(none)"}");
+            lines.Add($"  Left Glove:  {leftGlove?.ItemName ?? "(none)"}");
+            lines.Add($"  Right Glove: {rightGlove?.ItemName ?? "(none)"}");
         }
 
         if (effects?.Effects.Count > 0)

@@ -158,7 +158,7 @@ public class GameSessionHost
             PlayerGold = stats?.Gold ?? 0,
             InventoryItemIds = inv?.ItemIds.ToList() ?? new(),
             WeaponId = equip?.GetSlotItems(EquipmentSlot.WieldRight).FirstOrDefault()?.ItemId, // Save right hand wield for backwards compat
-            ArmorId = equip?.GetSlotItems(EquipmentSlot.UpperTorso).FirstOrDefault()?.ItemId,
+            ArmorId = equip?.GetSlotItems(EquipmentSlot.Body).FirstOrDefault()?.ItemId,
             SavedAt = DateTime.UtcNow
         };
     }
@@ -200,12 +200,12 @@ public class GameSessionHost
                     equip.EquipItem(EquipmentSlot.WieldRight, save.WeaponId, weaponData.Name);
             }
 
-            // Restore armor to UpperTorso slot
+            // Restore armor to Body slot
             if (save.ArmorId is not null)
             {
                 var armorData = _content?.Items.FirstOrDefault(i => i.Id == save.ArmorId);
                 if (armorData is not null)
-                    equip.EquipItem(EquipmentSlot.UpperTorso, save.ArmorId, armorData.Name);
+                    equip.EquipItem(EquipmentSlot.Body, save.ArmorId, armorData.Name);
             }
         }
     }

@@ -14,6 +14,7 @@ Explore procedurally connected dungeons, battle NPCs, collect items, and complet
 - **Memory System** — Tracks visited rooms, items taken, and NPC encounters with visit-based recollection
 - **Action Log** — Rolling history of player actions (movement, combat, items, interactions)
 - **Smart Terminal** — Persistent room description panel + action/conversation panel
+- **Time-of-Day System** — Game clock with visual time widget showing dawn/morning/midday/afternoon/evening/night cycles
 - **Command-Driven Interface** — Natural language commands (look, move, take, attack, wear, wield, etc.)
 - **Advanced Equipment System** — 16 body slots + 6 relic slots + dual wielding (left/right hand)
 - **13 Diverse Stats** — Strength, Agility, Dexterity, Perception, Intelligence, Willpower, Vitality, Charisma, Luck, Memory, Fate, Eldritch, Racial
@@ -33,7 +34,7 @@ proto-0/
 │   │   ├── Data/         # Content data structures
 │   │   └── Core/         # ECS framework, events, state management
 │   └── ProtoMud/         # Blazor WebAssembly UI
-│       ├── Components/   # UI components (Terminal, EntityButton, PlayerInfoPanel, EquipmentPanel, ActionLogPanel, MapPanel)
+│       ├── Components/   # UI components (Terminal, EntityButton, PlayerInfoPanel, EquipmentPanel, ActionLogPanel, MapPanel, TimeWidget)
 │       ├── Pages/        # Blazor pages (Home, Game)
 │       ├── Services/     # Game session hosting
 │       └── wwwroot/      # Static assets and game content (JSON)

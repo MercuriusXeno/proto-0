@@ -34,13 +34,12 @@
         {
             new("Wielding", new[] { EquipmentSlot.WieldLeft, EquipmentSlot.WieldRight }),
             new("Head", new[] { EquipmentSlot.Head, EquipmentSlot.Face, EquipmentSlot.Neck }),
-            new("Torso", new[] { EquipmentSlot.UpperTorso, EquipmentSlot.LowerTorso, EquipmentSlot.Waist }),
-            new("Arms", new[] { EquipmentSlot.Shoulder, EquipmentSlot.UpperArm, EquipmentSlot.Elbow,
-                               EquipmentSlot.Forearm, EquipmentSlot.Wrist, EquipmentSlot.Hand }),
-            new("Legs", new[] { EquipmentSlot.Thigh, EquipmentSlot.Knee, EquipmentSlot.Calf,
-                               EquipmentSlot.Ankle, EquipmentSlot.Foot }),
-            new("Relics", new[] { EquipmentSlot.Relic1, EquipmentSlot.Relic2, EquipmentSlot.Relic3,
-                                 EquipmentSlot.Relic4, EquipmentSlot.Relic5, EquipmentSlot.Relic6 })
+            new("Torso", new[] { EquipmentSlot.Body, EquipmentSlot.Waist }),
+            new("Arms", new[] { EquipmentSlot.LeftArm, EquipmentSlot.RightArm,
+                               EquipmentSlot.LeftHand, EquipmentSlot.RightHand }),
+            new("Legs", new[] { EquipmentSlot.Legs, EquipmentSlot.Feet }),
+            new("Relics", new[] { EquipmentSlot.Relic1, EquipmentSlot.Relic2,
+                                 EquipmentSlot.Relic3, EquipmentSlot.Relic4 })
         };
     }
 
@@ -48,17 +47,16 @@
     {
         return slot switch
         {
-            EquipmentSlot.WieldLeft => "Left Hand",
-            EquipmentSlot.WieldRight => "Right Hand",
-            EquipmentSlot.UpperTorso => "Upper Torso",
-            EquipmentSlot.LowerTorso => "Lower Torso",
-            EquipmentSlot.UpperArm => "Upper Arm",
+            EquipmentSlot.WieldLeft => "Wield Left",
+            EquipmentSlot.WieldRight => "Wield Right",
+            EquipmentSlot.LeftArm => "Left Arm",
+            EquipmentSlot.RightArm => "Right Arm",
+            EquipmentSlot.LeftHand => "Left Hand",
+            EquipmentSlot.RightHand => "Right Hand",
             EquipmentSlot.Relic1 => "Relic I",
             EquipmentSlot.Relic2 => "Relic II",
             EquipmentSlot.Relic3 => "Relic III",
             EquipmentSlot.Relic4 => "Relic IV",
-            EquipmentSlot.Relic5 => "Relic V",
-            EquipmentSlot.Relic6 => "Relic VI",
             _ => slot.ToString()
         };
     }

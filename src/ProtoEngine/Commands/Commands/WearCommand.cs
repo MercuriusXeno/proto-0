@@ -37,9 +37,9 @@ public class WearCommand : ICommand
         if (equip is null || combat is null)
             return CommandResult.Fail("You can't equip items right now.");
 
-        // For now, default armor to UpperTorso
+        // For now, default armor to Body
         // TODO: Add slot information to ItemData for more precise equipment
-        equip.EquipItem(EquipmentSlot.UpperTorso, item.Id, item.Name);
+        equip.EquipItem(EquipmentSlot.Body, item.Id, item.Name);
         combat.Defense = 2 + item.DefenseBonus;
 
         return CommandResult.Ok($"You wear the {item.Name}. Defense: {combat.Defense}");

@@ -118,14 +118,18 @@ public class LookCommand : ICommand
 
                 if (npcMemory != null)
                 {
-                    // We know their name - show "Name the Title"
+                    // We know their name - show "Name, the Title,"
                     var npcComp = npc.Get<NpcComponent>();
                     var displayText = desc.Name;
 
                     // Add title if they have one and aren't a creature
                     if (!string.IsNullOrEmpty(npcComp?.Title))
                     {
-                        displayText = $"{desc.Name} the {npcComp.Title}";
+                        displayText = $"{desc.Name}, the {npcComp.Title},";
+                    }
+                    else
+                    {
+                        displayText = $"{desc.Name},";
                     }
 
                     var npcRef = new EntityReference(
@@ -167,14 +171,18 @@ public class LookCommand : ICommand
 
                 if (npcMemory != null)
                 {
-                    // We knew their name - show "Name the Title"
+                    // We knew their name - show "Name, the Title,"
                     npcRefName = desc.Name;
                     displayText = desc.Name;
 
                     // Add title if they have one and aren't a creature
                     if (!string.IsNullOrEmpty(npcComp?.Title))
                     {
-                        displayText = $"{desc.Name} the {npcComp.Title}";
+                        displayText = $"{desc.Name}, the {npcComp.Title},";
+                    }
+                    else
+                    {
+                        displayText = $"{desc.Name},";
                     }
                 }
                 else

@@ -214,6 +214,7 @@ dotnet build
 - **StatsPanel**: Shows all 13 character attributes
 - **ActionLogPanel**: Rolling log of player actions (max 100 entries)
 - **MapPanel**: Room navigation and map display (currently simple, placeholder for future visual map)
+- **TimeWidget**: Displays current time of day (Dawn/Morning/Midday/Afternoon/Evening/Night) and day number based on game clock
 
 ## Important Patterns
 

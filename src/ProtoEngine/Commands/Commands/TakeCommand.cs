@@ -40,7 +40,13 @@ public class TakeCommand : ICommand
                     _actionLog.LogItem(context.State, $"Picked up {item.Name}");
                 }
             }
-            return CommandResult.Ok(message);
+            // Refresh room description to remove item from view
+            return new CommandResult
+            {
+                Success = true,
+                Output = new List<string> { message },
+                RefreshRoomDescription = true
+            };
         }
         return CommandResult.Fail(message);
     }

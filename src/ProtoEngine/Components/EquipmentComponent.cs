@@ -13,32 +13,24 @@ public enum EquipmentSlot
     Neck,
 
     // Torso region
-    UpperTorso,
-    LowerTorso,
+    Body,
     Waist,
 
-    // Arm region (per arm, tracked separately)
-    Shoulder,
-    UpperArm,
-    Elbow,
-    Forearm,
-    Wrist,
-    Hand,
+    // Arm region (with laterality)
+    LeftArm,
+    RightArm,
+    LeftHand,
+    RightHand,
 
-    // Leg region (per leg, tracked separately)
-    Thigh,
-    Knee,
-    Calf,
-    Ankle,
-    Foot,
+    // Leg region (no laterality)
+    Legs,
+    Feet,
 
     // Accessory slots
     Relic1,
     Relic2,
     Relic3,
     Relic4,
-    Relic5,
-    Relic6,
 
     // Wielding slots (weapons, shields, etc.)
     WieldLeft,

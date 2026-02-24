@@ -1,0 +1,38 @@
+@inject GameSessionHost Host
+
+<div class="time-widget">
+    <div class="time-label">Time</div>
+    <div class="time-display">
+        <span class="time-value">@GetTimeOfDay()</span>
+        <span class="time-day">Day @GetDay()</span>
+    </div>
+</div>
+
+@code {
+    public void Refresh()
+    {
+        StateHasChanged();
+    }
+
+    private int GetDay()
+    {
+        if (Host.Session?.State?.Clock is null) return 1;
+        return (Host.Session.State.Clock.Tick / 24) + 1;
+    }
+
+    private string GetTimeOfDay()
+    {
+        if (Host.Session?.State?.Clock is null) return "Dawn";
+
+        var hour = Host.Session.State.Clock.Tick % 24;
+        return hour switch
+        {
+            >= 5 and < 8 => "Dawn",
+            >= 8 and < 12 => "Morning",
+            >= 12 and < 14 => "Midday",
+            >= 14 and < 18 => "Afternoon",
+            >= 18 and < 21 => "Evening",
+            _ => "Night"
+        };
+    }
+}

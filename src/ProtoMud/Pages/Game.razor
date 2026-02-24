@@ -31,6 +31,7 @@ else
         </div>
 
         <div class="sidebar-right">
+            <TimeWidget @ref="_timeWidget" />
             <ActionLogPanel @ref="_actionLogPanel" />
         </div>
     </div>
@@ -41,6 +42,7 @@ else
     private PlayerInfoPanel? _playerInfoPanel;
     private MapPanel? _mapPanel;
     private ActionLogPanel? _actionLogPanel;
+    private TimeWidget? _timeWidget;
     private bool _autoLookAfterMove = true; // Default to enabled
 
     protected override void OnInitialized()
@@ -124,5 +126,6 @@ else
         _playerInfoPanel?.Refresh();
         _mapPanel?.Refresh();
         _actionLogPanel?.Refresh();
+        _timeWidget?.Refresh();
     }
 }
