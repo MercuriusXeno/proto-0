@@ -7,6 +7,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ## [Unreleased]
 
 ### Added
+- Exercise-based stat growth system with geometric compounding thresholds (`StatGrowthSystem`)
+- `StatType` enum for type-safe stat references across systems
+- `ExerciseComponent` tracking accumulated exercise progress per stat
+- `StatsComponent.GetStat()`/`SetStat()` generic accessors via `StatType`
+- `StatExercisedEvent` and `StatIncreasedEvent` game events
+- Per-stat growth curve overrides via `StatGrowthConfig`
 - Text-based dungeon RPG built with C# .NET 9.0 and Blazor WebAssembly
 - Entity-Component-System (ECS) architecture for game logic
 - Command-driven gameplay with natural language commands (look, move, take, attack, talk, etc.)
@@ -62,6 +68,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - Redundant "Equipment" header from equipment panel tab
 
 ### Fixed
+- Save/load now persists all 8 stats (previously only STR, DEX, INT were saved; FOR, AGI, WIL, PER, CHA were lost on reload)
+- Exercise progress dictionary included in save/load round-trips
 - Real-time room description updates when game state changes
 - Proper separation of Use, Wear, and Wield command behaviors
 - Equipment slot references throughout codebase after simplification

@@ -11,8 +11,8 @@ This is a text-based dungeon RPG built with C# .NET 9.0 and Blazor WebAssembly. 
 - **ProtoEngine** (`src/ProtoEngine/`): Core game logic library
   - Platform-agnostic, contains all game systems, components, and commands
   - `Commands/` — Player commands including EntityReference and OutputLine for rich output
-  - `Components/` — Data components including EquipmentComponent (11 slots), StatsComponent (8 stats), ExploredRoomsComponent
-  - `Systems/` — Game systems including ActionLogSystem, NpcSystem, WorldSystem, InventorySystem, CombatSystem
+  - `Components/` — Data components including EquipmentComponent (11 slots), StatsComponent (8 stats), ExerciseComponent, ExploredRoomsComponent, StatType enum
+  - `Systems/` — Game systems including ActionLogSystem, NpcSystem, WorldSystem, InventorySystem, CombatSystem, StatGrowthSystem
   - `Data/` — Content structures including NpcDisposition, RoomData with ExitPreviews
 - **ProtoMud** (`src/ProtoMud/`): Blazor WebAssembly UI layer
   - Hosts the engine and provides the browser-based interface
@@ -48,13 +48,13 @@ dotnet build
 - Use `Add<T>()`, `Get<T>()`, `Has<T>()` to manage components
 
 **Component** (implement `IComponent`): Pure data structures
-- Examples: `PositionComponent`, `HealthComponent`, `StatsComponent`, `InventoryComponent`, `EquipmentComponent`, `ExploredRoomsComponent`
+- Examples: `PositionComponent`, `HealthComponent`, `StatsComponent`, `InventoryComponent`, `EquipmentComponent`, `ExploredRoomsComponent`, `ExerciseComponent`
 - Stored in `Components/` directory
 - No logic - just data
 
 **System** (implement `IGameSystem`): Logic processors
 - Operate on entities with specific components
-- Examples: `WorldSystem`, `PlayerSystem`, `CombatSystem`, `InventorySystem`, `ActionLogSystem`, `NpcSystem`
+- Examples: `WorldSystem`, `PlayerSystem`, `CombatSystem`, `InventorySystem`, `ActionLogSystem`, `NpcSystem`, `StatGrowthSystem`
 - Registered with `GameSession` at startup
 - Implement `ITickable` to receive per-turn updates
 - Initialize via `Initialize(GameState state)` method
@@ -82,7 +82,7 @@ dotnet build
 - Pub/sub pattern for game events
 - Events defined as records in `Events/GameEvents.cs`
 - Systems can subscribe to events and react accordingly
-- Examples: `RoomEnteredEvent`, `EntityDiedEvent`, `ItemPickedUpEvent`
+- Examples: `RoomEnteredEvent`, `EntityDiedEvent`, `ItemPickedUpEvent`, `StatExercisedEvent`, `StatIncreasedEvent`
 
 ### Game Session
 
@@ -140,7 +140,22 @@ dotnet build
 - **PER** (Perception): Awareness, detection
 - **CHA** (Charisma): Social influence, persuasion
 - All stats start at 10; displayed with 3-letter abbreviations
-- Component: `StatsComponent`
+- Component: `StatsComponent` with `GetStat(StatType)`/`SetStat(StatType, int)` generic accessors
+- Enum: `StatType` for type-safe stat references
+
+### Exercise-Based Stat Growth
+- Stats grow through accumulated exercise, not leveling
+- **Growth curve**: Geometric compounding — `threshold(n) = baseCost * ratio^n`
+  - `baseCost` = 100 (exercise needed for first point)
+  - `ratio` = 1.15 (15% compounding per subsequent point)
+  - Per-stat overrides supported via `StatGrowthConfig.Overrides`
+- **Exercise seam**: `StatGrowthSystem.Exercise(state, stat, amount)` — single API any command/system calls
+  - Adds progress to `ExerciseComponent`, publishes `StatExercisedEvent`
+  - Checks threshold, increments stat if met, publishes `StatIncreasedEvent`
+  - Excess exercise rolls over (loop handles multiple level-ups)
+- Component: `ExerciseComponent` — `Dictionary<StatType, double>` tracking progress per stat
+- System: `StatGrowthSystem` — exposed as `GameSessionHost.StatGrowth`
+- Exercise progress persisted in save/load
 
 ### Action Log System
 - Records all player actions in a rolling log (max 100 entries)
@@ -285,6 +300,17 @@ explored.VisitedRoomIds.Add(newRoomId);
 // In LookCommand - check if exit leads to visited room
 var explored = context.State.Player.Get<ExploredRoomsComponent>();
 var isExplored = explored?.VisitedRoomIds.Contains(exit.Value) == true;
+```
+
+### Exercising Stats
+Commands or systems that should contribute to stat growth call the exercise seam:
+```csharp
+// In a command — e.g. melee attack exercises Strength
+var statGrowth = /* injected StatGrowthSystem */;
+statGrowth.Exercise(context.State, StatType.Strength, 10.0);
+
+// Fractional amounts are supported
+statGrowth.Exercise(context.State, StatType.Perception, 0.5);
 ```
 
 ## Dependencies

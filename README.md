@@ -20,6 +20,7 @@ Explore procedurally connected dungeons, battle NPCs, collect items, and complet
 - **Command-Driven Interface** — Natural language commands (look, move, take, attack, wear, wield, etc.)
 - **Simplified Equipment System** — 11 slots: Head, Body, Arms, Belt, Legs, Feet, Left/Right wielding, 3 accessory slots
 - **8 Core Stats** — STR, DEX, FOR, AGI, WIL, INT, PER, CHA (displayed with 3-letter abbreviations)
+- **Exercise-Based Stat Growth** — Stats grow through accumulated actions with geometric compounding thresholds (each point costs 15% more)
 - **NPC Personality System** — NPCs have dispositions (friendly, standoffish, hostile) affecting interactions
 - **Inventory & Crafting** — Collect items, manage equipment, craft new items from recipes
 - **Quest System** — Track objectives and earn rewards
@@ -31,8 +32,8 @@ proto-0/
 ├── src/
 │   ├── ProtoEngine/      # Core game logic (platform-agnostic)
 │   │   ├── Commands/     # Player commands (look, move, take, etc.)
-│   │   ├── Components/   # Data components (Health, Inventory, Position, Equipment, Stats, etc.)
-│   │   ├── Systems/      # Game systems (World, Combat, Inventory, ActionLog, etc.)
+│   │   ├── Components/   # Data components (Health, Inventory, Position, Equipment, Stats, Exercise, etc.)
+│   │   ├── Systems/      # Game systems (World, Combat, Inventory, ActionLog, StatGrowth, etc.)
 │   │   ├── Data/         # Content data structures
 │   │   └── Core/         # ECS framework, events, state management
 │   └── ProtoMud/         # Blazor WebAssembly UI
@@ -131,7 +132,7 @@ All game content is defined in JSON files located in `src/ProtoMud/wwwroot/data/
 - [x] **Goal #1: Output Window Management** — Action logging, smart terminal clearing, room exploration tracking
 - [x] **Goal #2: Interactive Buttons** — Clickable elements with context menus (items/NPCs) and direct navigation (exits)
 - [x] **Goal #3: Navigation & Mapping** — Compass rose map showing adjacent rooms with directional layout
-- [~] **Goal #4: Expanded Attributes** — 8 streamlined stats ✓; action-based growth and rebirth system pending
+- [~] **Goal #4: Expanded Attributes** — 8 streamlined stats ✓; exercise-based growth seam ✓; exercise consumers and rebirth system pending
 - [ ] **Goal #5: Comprehensive Skills** — Magic types, skill progression, command unlocks
 - [ ] **Goal #6: Intelligent Aliasing** — Smart partial matching, disambiguation, item tagging
 - [ ] **Goal #7: Content Editor** — Visual toolchain for creating game assets
