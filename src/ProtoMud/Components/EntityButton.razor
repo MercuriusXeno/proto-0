@@ -2,7 +2,8 @@
 
 <span class="entity-btn entity-@Type.ToString().ToLower()"
       @onclick="HandleClick"
-      @onclick:stopPropagation="true">
+      @onclick:stopPropagation="true"
+      title="@(Entity.TooltipText ?? "")">
     @DisplayName
     @if (_showMenu)
     {
@@ -26,7 +27,18 @@
     private List<EntityAction> AvailableActions => Entity.AvailableActions;
     private bool _showMenu = false;
 
-    private void HandleClick() => _showMenu = !_showMenu;
+    private async Task HandleClick()
+    {
+        // For exits, directly navigate instead of showing menu
+        if (Type == EntityType.Exit)
+        {
+            await OnCommand.InvokeAsync(Entity.DisplayName); // Just send direction
+            return;
+        }
+
+        // For other entities, toggle menu
+        _showMenu = !_showMenu;
+    }
 
     private async Task ExecuteAction(EntityAction action)
     {

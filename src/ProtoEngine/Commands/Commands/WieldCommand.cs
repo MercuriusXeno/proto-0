@@ -50,7 +50,7 @@ public class WieldCommand : ICommand
         var handName = hand == "left" ? "left hand" : "right hand";
 
         // Check if something is already wielded
-        var currentlyWielded = equip.GetSlotItems(slot).FirstOrDefault();
+        var currentlyWielded = equip.GetSlotItem(slot);
         if (currentlyWielded != null)
             return CommandResult.Fail($"You're already wielding {currentlyWielded.ItemName} in your {handName}. Unwield it first.");
 

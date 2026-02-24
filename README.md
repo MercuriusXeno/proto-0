@@ -4,20 +4,21 @@ A text-based dungeon RPG built with C# .NET 9.0 and Blazor WebAssembly.
 
 ## Overview
 
-Explore procedurally connected dungeons, battle NPCs, collect items, and complete quests in this classic text-based adventure. The game features a modern web-based interface with real-time action logging, contextual memory system, and an intuitive 3-column layout.
+Explore procedurally connected dungeons, battle NPCs, collect items, and complete quests in this classic text-based adventure. The game features a modern web-based interface with real-time action logging, room exploration tracking, and an intuitive 3-column layout.
 
 ## Features
 
 - **Entity-Component-System Architecture** — Clean separation of game logic and data
-- **Interactive Buttons** — Clickable items, NPCs, and exits in terminal output with context menus
+- **Interactive Buttons** — Clickable items and NPCs in terminal output with context menus; exits navigate with single click
 - **Rich Output System** — Structured terminal output with entity references and metadata
-- **Memory System** — Tracks visited rooms, items taken, and NPC encounters with visit-based recollection
+- **Exit Previews** — Hover over exits to see contextual descriptions of what lies in that direction
+- **Room Exploration Tracking** — Permanent tracking of visited rooms; exits marked as explored/unexplored
 - **Action Log** — Rolling history of player actions (movement, combat, items, interactions)
 - **Smart Terminal** — Persistent room description panel + action/conversation panel
 - **Time-of-Day System** — Game clock with visual time widget showing dawn/morning/midday/afternoon/evening/night cycles
 - **Command-Driven Interface** — Natural language commands (look, move, take, attack, wear, wield, etc.)
-- **Advanced Equipment System** — 16 body slots + 6 relic slots + dual wielding (left/right hand)
-- **13 Diverse Stats** — Strength, Agility, Dexterity, Perception, Intelligence, Willpower, Vitality, Charisma, Luck, Memory, Fate, Eldritch, Racial
+- **Simplified Equipment System** — 11 slots: Head, Body, Arms, Belt, Legs, Feet, Left/Right wielding, 3 accessory slots
+- **8 Core Stats** — STR, DEX, FOR, AGI, WIL, INT, PER, CHA (displayed with 3-letter abbreviations)
 - **NPC Personality System** — NPCs have dispositions (friendly, standoffish, hostile) affecting interactions
 - **Inventory & Crafting** — Collect items, manage equipment, craft new items from recipes
 - **Quest System** — Track objectives and earn rewards
@@ -29,12 +30,12 @@ proto-0/
 ├── src/
 │   ├── ProtoEngine/      # Core game logic (platform-agnostic)
 │   │   ├── Commands/     # Player commands (look, move, take, etc.)
-│   │   ├── Components/   # Data components (Health, Inventory, Position, etc.)
-│   │   ├── Systems/      # Game systems (World, Combat, Memory, etc.)
+│   │   ├── Components/   # Data components (Health, Inventory, Position, Equipment, Stats, etc.)
+│   │   ├── Systems/      # Game systems (World, Combat, Inventory, ActionLog, etc.)
 │   │   ├── Data/         # Content data structures
 │   │   └── Core/         # ECS framework, events, state management
 │   └── ProtoMud/         # Blazor WebAssembly UI
-│       ├── Components/   # UI components (Terminal, EntityButton, PlayerInfoPanel, EquipmentPanel, ActionLogPanel, MapPanel, TimeWidget)
+│       ├── Components/   # UI components (Terminal, EntityButton, PlayerInfoPanel, EquipmentPanel, ActionLogPanel, MapPanel, TimeWidget, StatsPanel)
 │       ├── Pages/        # Blazor pages (Home, Game)
 │       ├── Services/     # Game session hosting
 │       └── wwwroot/      # Static assets and game content (JSON)
@@ -90,14 +91,17 @@ The game uses natural language commands in the terminal. Try these to get starte
 - `status` — View character stats and equipment
 - `help` — See all available commands
 
-**Tip:** Click on highlighted items, NPCs, and exits in the terminal to see context menu actions!
+**Tips:**
+- Click on highlighted items and NPCs to see context menu actions
+- Click on exits to instantly navigate in that direction
+- Hover over exits to preview what you can see in that direction
 
 ## Architecture
 
 **Entity-Component-System (ECS)**
 - **Entity**: Generic container (Player, NPCs, Items)
 - **Component**: Pure data structures (Health, Position, Stats)
-- **System**: Logic processors (Combat, Inventory, World, Memory)
+- **System**: Logic processors (Combat, Inventory, World, ActionLog)
 
 **Command System**
 - Player inputs parsed into commands
@@ -114,7 +118,7 @@ See [CLAUDE.md](CLAUDE.md) for detailed development documentation.
 ## Game Content
 
 All game content is defined in JSON files located in `src/ProtoMud/wwwroot/data/`:
-- `rooms.json` — Room definitions, exits, items, NPCs
+- `rooms.json` — Room definitions, exits, exit previews, items, NPCs
 - `items.json` — Item properties, stats, effects
 - `npcs.json` — NPC stats, dialogue, loot tables
 - `quests.json` — Quest objectives and rewards
@@ -123,10 +127,10 @@ All game content is defined in JSON files located in `src/ProtoMud/wwwroot/data/
 
 ## Development Roadmap
 
-- [x] **Goal #1: Output Window Management** — Memory system, action logging, smart terminal clearing
-- [x] **Goal #2: Interactive Buttons** — Clickable elements in output with context menus (EntityButton, rich output system)
-- [ ] **Goal #3: Navigation & Mapping** — Visual map showing visited rooms and connections
-- [~] **Goal #4: Expanded Attributes** — 13 stats implemented; action-based growth and rebirth system pending
+- [x] **Goal #1: Output Window Management** — Action logging, smart terminal clearing, room exploration tracking
+- [x] **Goal #2: Interactive Buttons** — Clickable elements with context menus (items/NPCs) and direct navigation (exits)
+- [~] **Goal #3: Navigation & Mapping** — Exit tracking ✓; visual map pending
+- [~] **Goal #4: Expanded Attributes** — 8 streamlined stats ✓; action-based growth and rebirth system pending
 - [ ] **Goal #5: Comprehensive Skills** — Magic types, skill progression, command unlocks
 - [ ] **Goal #6: Intelligent Aliasing** — Smart partial matching, disambiguation, item tagging
 - [ ] **Goal #7: Content Editor** — Visual toolchain for creating game assets

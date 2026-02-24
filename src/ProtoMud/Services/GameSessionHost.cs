@@ -28,7 +28,6 @@ public class GameSessionHost
     public QuestSystem? Quest { get; private set; }
     public CraftingSystem? Crafting { get; private set; }
     public NarrativeSystem? Narrative { get; private set; }
-    public MemorySystem? Memory { get; private set; }
     public ActionLogSystem? ActionLog { get; private set; }
 
     public GameSession? Session => _session;
@@ -73,7 +72,6 @@ public class GameSessionHost
         Quest = new QuestSystem(_content, eventBus);
         Crafting = new CraftingSystem(_content, eventBus);
         Narrative = new NarrativeSystem(eventBus);
-        Memory = new MemorySystem(eventBus);
         ActionLog = new ActionLogSystem();
         var statusEffects = new StatusEffectSystem();
         var time = new TimeSystem();
@@ -90,24 +88,23 @@ public class GameSessionHost
         _session.RegisterSystem(Quest);
         _session.RegisterSystem(Crafting);
         _session.RegisterSystem(Narrative);
-        _session.RegisterSystem(Memory);
         _session.RegisterSystem(ActionLog);
         _session.RegisterSystem(statusEffects);
         _session.RegisterSystem(time);
         _session.RegisterSystem(events);
 
         // Register commands
-        registry.Register(new LookCommand(World, Inventory, Narrative, Memory));
-        registry.Register(new MoveCommand(World, Memory, ActionLog));
+        registry.Register(new LookCommand(World, Inventory, Narrative));
+        registry.Register(new MoveCommand(World, ActionLog));
         registry.Register(new InventoryCommand(Inventory));
-        registry.Register(new TakeCommand(Inventory, World, Memory, ActionLog));
+        registry.Register(new TakeCommand(Inventory, ActionLog));
         registry.Register(new DropCommand(Inventory));
         registry.Register(new UseCommand(Inventory));
         registry.Register(new WearCommand(Inventory));
         registry.Register(new WieldCommand(Inventory));
         registry.Register(new UnwieldCommand());
-        registry.Register(new AttackCommand(Combat, Player, World, Memory, ActionLog));
-        registry.Register(new TalkCommand(Npc, World, Memory));
+        registry.Register(new AttackCommand(Combat, Player, ActionLog));
+        registry.Register(new TalkCommand(Npc, World));
         registry.Register(new StatusCommand());
         registry.Register(new CraftCommand(Crafting));
         registry.Register(new QuestCommand(Quest));
@@ -157,8 +154,8 @@ public class GameSessionHost
             PlayerIntelligence = stats?.Intelligence ?? 10,
             PlayerGold = stats?.Gold ?? 0,
             InventoryItemIds = inv?.ItemIds.ToList() ?? new(),
-            WeaponId = equip?.GetSlotItems(EquipmentSlot.WieldRight).FirstOrDefault()?.ItemId, // Save right hand wield for backwards compat
-            ArmorId = equip?.GetSlotItems(EquipmentSlot.Body).FirstOrDefault()?.ItemId,
+            WeaponId = equip?.GetSlotItem(EquipmentSlot.WieldRight)?.ItemId, // Save right hand wield for backwards compat
+            ArmorId = equip?.GetSlotItem(EquipmentSlot.Body)?.ItemId,
             SavedAt = DateTime.UtcNow
         };
     }

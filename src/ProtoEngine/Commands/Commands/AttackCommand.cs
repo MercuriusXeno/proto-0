@@ -7,20 +7,16 @@ public class AttackCommand : ICommand
 {
     private readonly CombatSystem _combat;
     private readonly PlayerSystem _player;
-    private readonly WorldSystem _world;
-    private readonly MemorySystem _memory;
     private readonly ActionLogSystem _actionLog;
 
     public string Verb => "attack";
     public string[] Aliases => ["fight", "hit", "kill"];
     public string Description => "Attack an NPC (attack <target name>)";
 
-    public AttackCommand(CombatSystem combat, PlayerSystem player, WorldSystem world, MemorySystem memory, ActionLogSystem actionLog)
+    public AttackCommand(CombatSystem combat, PlayerSystem player, ActionLogSystem actionLog)
     {
         _combat = combat;
         _player = player;
-        _world = world;
-        _memory = memory;
         _actionLog = actionLog;
     }
 
@@ -36,7 +32,6 @@ public class AttackCommand : ICommand
             return CommandResult.Fail($"There is no '{targetName}' here to attack.");
 
         var desc = target.Get<DescriptionComponent>();
-        var room = _world.GetPlayerRoom(context.State);
 
         _actionLog.LogCombat(context.State, $"Attacked {desc?.Name ?? "enemy"}!");
 
@@ -44,10 +39,8 @@ public class AttackCommand : ICommand
 
         if (targetDied)
         {
-            // Record NPC kill
-            if (room is not null && desc is not null)
+            if (desc is not null)
             {
-                _memory.RecordNpcKilled(context.State, room.Id, target.Id, desc.Name);
                 _actionLog.LogCombat(context.State, $"Slew {desc.Name} in cold blood!");
             }
 

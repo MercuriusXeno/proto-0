@@ -22,11 +22,11 @@ public class UnwieldCommand : ICommand
         var slot = hand == "left" ? EquipmentSlot.WieldLeft : EquipmentSlot.WieldRight;
         var handName = hand == "left" ? "left hand" : "right hand";
 
-        var wielded = equip.GetSlotItems(slot).FirstOrDefault();
+        var wielded = equip.GetSlotItem(slot);
         if (wielded is null)
             return CommandResult.Fail($"You're not wielding anything in your {handName}.");
 
-        equip.UnequipItem(slot, wielded.ItemId);
+        equip.UnequipItem(slot);
         return CommandResult.Ok($"You lower the {wielded.ItemName}.");
     }
 }

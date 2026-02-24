@@ -10,12 +10,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - Text-based dungeon RPG built with C# .NET 9.0 and Blazor WebAssembly
 - Entity-Component-System (ECS) architecture for game logic
 - Command-driven gameplay with natural language commands (look, move, take, attack, talk, etc.)
-- Interactive buttons with context menus for items, NPCs, and exits
+- Interactive buttons with context menus for items and NPCs; single-click navigation for exits
 - Rich output system with entity references and metadata
-- Memory system tracking visited rooms, items taken, and NPC encounters with visit-based recollection
 - Action log system recording player actions in rolling history (max 100 entries)
-- Equipment system with 24 slots: 16 body slots + 6 relic slots + 2 wielding slots (left/right hand)
-- 13 diverse character stats: Strength, Agility, Dexterity, Perception, Intelligence, Willpower, Vitality, Charisma, Luck, Memory, Fate, Eldritch, Racial
+- Simplified equipment system with 11 slots: Head, Body, Arms, Belt, Legs, Feet, WieldLeft, WieldRight, Accessory1-3
+- 8 streamlined character stats with 3-letter abbreviations: STR, DEX, FOR, AGI, WIL, INT, PER, CHA
 - NPC disposition system (friendly, standoffish, hostile) affecting interactions
 - Inventory, crafting, combat, and quest systems
 - JSON-based game content (rooms, items, NPCs, quests, recipes, dialogue)
@@ -23,23 +22,39 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - WearCommand for armor and clothing
 - WieldCommand for weapons and shields with left/right hand specification
 - UnwieldCommand for removing wielded items
-- EntityButton component for clickable game elements
+- EntityButton component for clickable game elements with context menus and tooltips
 - PlayerInfoPanel with tabbed Equipment/Stats interface
-- EquipmentPanel displaying all equipped items by body region
-- StatsPanel showing all 13 character attributes
+- EquipmentPanel displaying all 11 equipped items in simple list
+- StatsPanel showing all 8 character attributes with abbreviated labels
 - TimeWidget displaying current time of day (Dawn/Morning/Midday/Afternoon/Evening/Night) and day number
 - Session notes and development documentation (CLAUDE.md, README.md)
 - Comprehensive development guide for contributors
+- ExploredRoomsComponent for permanent room visit tracking
+- Exit preview system with hover tooltips showing contextual directional descriptions
+- RoomData.ExitPreviews for defining context-aware exit descriptions per room
 
 ### Changed
 - Terminal redesigned with split panels: persistent room description (top) + action/conversation output (bottom)
-- NPC system now shows "someone" until player talks to them; disposition affects introduction
 - StatusCommand now differentiates between worn items (armor/clothing) and wielded items (weapons/shields)
 - Left sidebar split into PlayerInfoPanel (top) and MapPanel (bottom)
 - Game layout redesigned with CSS grid for responsive 3-column layout
-- Memory system now only remembers items when picked up (not just seen)
-- Room descriptions show contextual memories with timestamps on revisits
+- Exit buttons now navigate directly on click instead of showing context menu
+- Exit buttons show preview tooltips on hover with contextual descriptions
+- Equipment system simplified from 24 slots with layering to 11 simple slots (one item per slot)
+- Character stats simplified from 13 attributes to 8 core attributes
+- Stat labels displayed as 3-letter abbreviations (STR, DEX, FOR, AGI, WIL, INT, PER, CHA)
+- NPCs now always show their names (removed name discovery mechanic)
+
+### Removed
+- MemorySystem and RoomMemoryComponent (complex memory tracking)
+- "You've been here before" messages on room revisits
+- Item recollection feature ("This is where you found...")
+- NPC name discovery system (showing "someone" until talked to)
+- Timestamp tracking for NPC kills and item pickups
+- Layering support in equipment system
+- 5 stats removed: Vitality, Luck, Memory, Fate, Eldritch, Racial (replaced with Fortitude)
 
 ### Fixed
-- Real-time room description updates when game state changes (e.g., NPC introductions)
+- Real-time room description updates when game state changes
 - Proper separation of Use, Wear, and Wield command behaviors
+- Equipment slot references throughout codebase after simplification

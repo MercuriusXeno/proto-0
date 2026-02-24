@@ -4,6 +4,12 @@
     "name": "Town Square",
     "description": "You stand in the heart of a small frontier town. Cobblestones stretch beneath your feet, worn smooth by countless travelers. A weathered fountain gurgles at the center, its water dark and cold. Buildings crowd the edges — a tavern to the north, a general store to the east, and a shadowed alley to the south. The town gate lies to the west.",
     "exits": { "north": "tavern", "east": "general_store", "south": "dark_alley", "west": "town_gate" },
+    "exitPreviews": {
+      "north": "The warm glow of lantern light spills from the tavern's windows. You can hear the faint sound of laughter and a bard's melody.",
+      "east": "Through the general store's window, you glimpse shelves packed with goods. A hand-painted sign hangs above the door.",
+      "south": "The alley mouth yawns like a dark throat between two buildings. Cold air seems to seep from its depths.",
+      "west": "The sturdy town gate stands open. Beyond it, you see the road winding toward distant hills and forest."
+    },
     "itemIds": ["rusty_sword"],
     "npcIds": ["old_merchant"]
   },
@@ -36,6 +42,10 @@
     "name": "Dark Alley",
     "description": "The alley narrows quickly, flanked by crumbling brick walls slick with moisture. Refuse litters the ground. The shadows here feel almost alive. Something skitters in the darkness ahead. A passage continues south to the old cemetery.",
     "exits": { "north": "town_square", "south": "cemetery" },
+    "exitPreviews": {
+      "north": "The town square's fountain is visible at the alley's mouth. Sunlight seems impossibly bright from here.",
+      "south": "Ahead, crooked headstones rise above overgrown grass. A low mist creeps along the ground toward you."
+    },
     "itemIds": [],
     "npcIds": ["giant_rat"]
   },
@@ -68,6 +78,11 @@
     "name": "Forest Path",
     "description": "Tall oaks and elms arch overhead, their branches intertwined to form a green canopy. Dappled sunlight filters through the leaves. The path is narrow but well-worn. Birdsong fills the air, though it grows quieter the deeper you go. The path splits ahead — north toward a clearing, south into deeper woods.",
     "exits": { "east": "town_gate", "north": "forest_clearing", "south": "deep_woods" },
+    "exitPreviews": {
+      "east": "The town gate is visible through the trees. You can see guards leaning against the walls.",
+      "north": "Sunlight brightens the path ahead. Through the trees, you glimpse a peaceful clearing dotted with wildflowers.",
+      "south": "The forest grows darker and denser. Ancient tree trunks disappear into shadow. Something feels watching."
+    },
     "itemIds": ["herb"],
     "npcIds": []
   },

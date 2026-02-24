@@ -1,3 +1,4 @@
+using ProtoEngine.Components;
 using ProtoEngine.Systems;
 
 namespace ProtoEngine.Commands.Commands;
@@ -10,17 +11,15 @@ public class MoveCommand : ICommand
     };
 
     private readonly WorldSystem _world;
-    private readonly MemorySystem _memory;
     private readonly ActionLogSystem _actionLog;
 
     public string Verb => "go";
     public string[] Aliases => ["move", "walk", "north", "south", "east", "west", "up", "down", "n", "s", "e", "w", "u", "d"];
     public string Description => "Move in a direction (go north, or just 'north')";
 
-    public MoveCommand(WorldSystem world, MemorySystem memory, ActionLogSystem actionLog)
+    public MoveCommand(WorldSystem world, ActionLogSystem actionLog)
     {
         _world = world;
-        _memory = memory;
         _actionLog = actionLog;
     }
 
@@ -65,16 +64,18 @@ public class MoveCommand : ICommand
 
         if (_world.TryMove(context.State, direction, out var newRoomId))
         {
-            // Record exit exploration
-            _memory.RecordExitExplored(context.State, currentRoom.Id, direction, newRoomId!);
-            _memory.AddRoomVisit(context.State, newRoomId!);
+            // Track visited room
+            var explored = context.State.Player.Get<ExploredRoomsComponent>();
+            if (explored == null)
+            {
+                explored = new ExploredRoomsComponent();
+                context.State.Player.Add(explored);
+            }
+            explored.VisitedRoomIds.Add(newRoomId!);
 
             // Log the movement
             _actionLog.LogMovement(context.State, currentRoom.Name, direction, newRoomId!);
 
-            var room = _world.GetRoom(newRoomId!);
-            if (room is not null)
-                return CommandResult.Ok($"You head {direction}.");
             return CommandResult.Ok($"You head {direction}.");
         }
 

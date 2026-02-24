@@ -11,9 +11,9 @@ This is a text-based dungeon RPG built with C# .NET 9.0 and Blazor WebAssembly. 
 - **ProtoEngine** (`src/ProtoEngine/`): Core game logic library
   - Platform-agnostic, contains all game systems, components, and commands
   - `Commands/` — Player commands including EntityReference and OutputLine for rich output
-  - `Components/` — Data components including EquipmentComponent with 24 slots (16 body + 6 relic + 2 wielding)
-  - `Systems/` — Game systems including MemorySystem, ActionLogSystem, NpcSystem
-  - `Data/` — Content structures including NpcDisposition for personality traits
+  - `Components/` — Data components including EquipmentComponent (11 slots), StatsComponent (8 stats), ExploredRoomsComponent
+  - `Systems/` — Game systems including ActionLogSystem, NpcSystem, WorldSystem, InventorySystem, CombatSystem
+  - `Data/` — Content structures including NpcDisposition, RoomData with ExitPreviews
 - **ProtoMud** (`src/ProtoMud/`): Blazor WebAssembly UI layer
   - Hosts the engine and provides the browser-based interface
   - 3-column layout: PlayerInfo/Map (left split), Terminal/ActionBar (center), Action Log (right)
@@ -48,13 +48,13 @@ dotnet build
 - Use `Add<T>()`, `Get<T>()`, `Has<T>()` to manage components
 
 **Component** (implement `IComponent`): Pure data structures
-- Examples: `PositionComponent`, `HealthComponent`, `StatsComponent`, `InventoryComponent`
+- Examples: `PositionComponent`, `HealthComponent`, `StatsComponent`, `InventoryComponent`, `EquipmentComponent`, `ExploredRoomsComponent`
 - Stored in `Components/` directory
 - No logic - just data
 
 **System** (implement `IGameSystem`): Logic processors
 - Operate on entities with specific components
-- Examples: `WorldSystem`, `PlayerSystem`, `CombatSystem`, `InventorySystem`
+- Examples: `WorldSystem`, `PlayerSystem`, `CombatSystem`, `InventorySystem`, `ActionLogSystem`, `NpcSystem`
 - Registered with `GameSession` at startup
 - Implement `ITickable` to receive per-turn updates
 - Initialize via `Initialize(GameState state)` method
@@ -107,7 +107,7 @@ dotnet build
 - Managed by `ContentManifest` and used by systems to instantiate game entities
 
 **Content Files**:
-- `rooms.json`: Room definitions with exits, items, and NPCs
+- `rooms.json`: Room definitions with exits, exit previews, items, and NPCs
 - `items.json`: Item properties, stats, effects
 - `npcs.json`: NPC stats, dialogue, loot tables
 - `quests.json`: Quest objectives and rewards
@@ -116,30 +116,31 @@ dotnet build
 
 ## Key Subsystems
 
-### Memory System
-- Tracks player's visited rooms (with visit counts), items taken, NPC encounters
-- **Visit-based recollection**: Items only remembered if picked up; rooms show memories on revisits
-- Enables contextual room descriptions with timestamps
-- Component: `RoomMemoryComponent` (with RoomVisitCounts, CurrentRoomId)
-- System: `MemorySystem`
-- Commands reference this for "remembered" text
+### Room Exploration Tracking
+- Tracks which rooms the player has visited (permanent, no degradation)
+- Component: `ExploredRoomsComponent` (HashSet of visited room IDs)
+- Updated by `MoveCommand` when entering new rooms
+- Used by `LookCommand` to show explored vs unexplored exits
+- Simple and lightweight - just tracks presence, no timestamps or visit counts
 
 ### Equipment System
-- **24 Total Slots**: 16 body + 6 relic + 2 wielding
-- **Body Slots**: Head, Face, Neck, UpperTorso, LowerTorso, Waist, Shoulder, UpperArm, Elbow, Forearm, Wrist, Hand, Thigh, Knee, Calf, Ankle, Foot
-- **Relic Slots**: Relic1-6 (for rings, amulets, accessories)
-- **Wielding Slots**: WieldLeft, WieldRight (for weapons, shields, bows)
-- **Layer Support**: Each slot can hold multiple items (layering for armor)
+- **11 Total Slots**: Head, Body, Arms, Belt, Legs, Feet, WieldLeft, WieldRight, Accessory1, Accessory2, Accessory3
+- **Simplified Design**: One item per slot, no layering
 - **Wear vs Wield**: `WearCommand` for armor/clothing (worn on body), `WieldCommand` for weapons/shields (held in hands)
 - **Unarmed Combat**: Empty wielding slots = hand-to-hand attacks
-- Component: `EquipmentComponent` with Dictionary<EquipmentSlot, List<EquippedItem>>
+- Component: `EquipmentComponent` with Dictionary<EquipmentSlot, EquippedItem?>
 
-### Character Stats (13 Attributes)
-- **Physical**: Strength, Agility, Dexterity, Vitality
-- **Mental**: Perception, Intelligence, Willpower, Memory
-- **Social**: Charisma, Luck, Fate
-- **Special**: Eldritch, Racial
-- All stats start at 10; intended for action-based growth (not yet implemented)
+### Character Stats (8 Attributes)
+- **STR** (Strength): Physical power, melee damage
+- **DEX** (Dexterity): Fine motor control, ranged attacks
+- **FOR** (Fortitude): Endurance, health, resistance
+- **AGI** (Agility): Speed, dodge, initiative
+- **WIL** (Willpower): Mental fortitude, magic resistance
+- **INT** (Intelligence): Knowledge, magic power
+- **PER** (Perception): Awareness, detection
+- **CHA** (Charisma): Social influence, persuasion
+- All stats start at 10; displayed with 3-letter abbreviations
+- Component: `StatsComponent`
 
 ### Action Log System
 - Records all player actions in a rolling log (max 100 entries)
@@ -153,22 +154,39 @@ dotnet build
 - **Room-viewing commands** (look, move, directional): Update room description panel
 - **Other commands**: Display results in action panel
 - **Auto-look**: Navigation commands can auto-execute "look" (toggleable checkbox)
-- **Real-time updates**: Commands can set `RefreshRoomDescription` flag to update room panel immediately
+- **Real-time updates**: Commands can set `RefreshRoomDescription = true` to update room panel immediately
 
 ### Interactive Buttons (Rich Output System)
-- **EntityReference**: Metadata for clickable entities (items, NPCs, exits) with available actions
+- **EntityReference**: Metadata for clickable entities (items, NPCs, exits) with available actions and optional tooltip text
 - **OutputLine**: Rich output structure containing text + entity references
-- **EntityButton**: Blazor component rendering clickable entities with context menus
+- **EntityButton**: Blazor component rendering clickable entities
+  - Items/NPCs: Show context menu on click
+  - Exits: Direct navigation on click, preview on hover
 - **CommandResult.RichOutput**: Backwards-compatible rich output (falls back to plain text)
 - Commands can return `CommandResult.OkRich()` with OutputLine arrays
 - Terminal parses entity references and renders EntityButton components inline
-- Click entity → context menu → execute action (e.g., click sword → "Take" → executes "take sword")
+
+### Exit Previews
+- Each room can define contextual preview text for each exit direction
+- Previews stored in `RoomData.ExitPreviews` dictionary (direction → description)
+- Displayed as tooltip when hovering over exit buttons
+- Enables context-aware descriptions (e.g., "From the top of the hill you can see...")
+- Example in rooms.json:
+  ```json
+  {
+    "id": "town_square",
+    "exits": { "north": "tavern" },
+    "exitPreviews": {
+      "north": "The warm glow of lantern light spills from the tavern's windows..."
+    }
+  }
+  ```
 
 ### NPC System
 - **Name vs Title**: NPCs have separate name ("Aldric") and title ("merchant")
 - **Disposition System**: NpcDisposition defines personality (friendly, standoffish, hostile)
-- **Discovery**: NPCs show as "someone" until talked to; disposition affects introduction
-- **Memory Integration**: MemorySystem tracks NPC meetings (requires talking, not just looking)
+- NPCs always show their names (no discovery mechanic)
+- Component: `NpcComponent` with name, title, disposition
 
 ## Adding New Features
 
@@ -208,10 +226,10 @@ dotnet build
 
 **Key UI Components**:
 - **Terminal**: Split into room-description-panel and action-output-panel
-- **EntityButton**: Renders clickable entities with context menus (used by Terminal)
+- **EntityButton**: Renders clickable entities; context menus for items/NPCs, direct navigation for exits, tooltips for previews
 - **PlayerInfoPanel**: Tabbed interface with Equipment and Stats tabs
-- **EquipmentPanel**: Displays all 24 equipment slots by region (Wielding, Head, Torso, Arms, Legs, Relics)
-- **StatsPanel**: Shows all 13 character attributes
+- **EquipmentPanel**: Displays all 11 equipment slots in a simple list
+- **StatsPanel**: Shows all 8 character attributes with 3-letter abbreviations
 - **ActionLogPanel**: Rolling log of player actions (max 100 entries)
 - **MapPanel**: Room navigation and map display (currently simple, placeholder for future visual map)
 - **TimeWidget**: Displays current time of day (Dawn/Morning/Midday/Afternoon/Evening/Night) and day number based on game clock
@@ -240,24 +258,22 @@ Terminal has two panels that update differently:
 - **Room description panel**: Updated by look/move commands, persists until next room-viewing command
 - **Action output panel**: Clears on every command, shows immediate action results
 - Commands can set `RefreshRoomDescription = true` to trigger automatic room description update
-  - Example: TalkCommand sets this on first NPC meeting to update "someone" → "Name the Title"
 
-### Memory Integration
-Commands that interact with entities should record memories:
+### Room Exploration Tracking
+Commands that navigate to new rooms should track visits:
 ```csharp
-// Items: Record when TAKEN, not just seen
-memorySystem.RecordItemTaken(state, itemId, roomId);
+// In MoveCommand - track visited room
+var explored = context.State.Player.Get<ExploredRoomsComponent>();
+if (explored == null)
+{
+    explored = new ExploredRoomsComponent();
+    context.State.Player.Add(explored);
+}
+explored.VisitedRoomIds.Add(newRoomId);
 
-// NPCs: Record when TALKED to (requires TalkCommand)
-memorySystem.RecordNpcMeeting(state, npcId, roomId);
-
-// Exits: Record when explored
-memorySystem.RecordExitExplored(state, roomId, direction);
-
-// Rooms: Visit tracking happens automatically in MoveCommand
-// Use GetCurrentVisitNumber() to check if revisit
-var visitNumber = memorySystem.GetCurrentVisitNumber(state, roomId);
-var isRevisit = visitNumber >= 1;
+// In LookCommand - check if exit leads to visited room
+var explored = context.State.Player.Get<ExploredRoomsComponent>();
+var isExplored = explored?.VisitedRoomIds.Contains(exit.Value) == true;
 ```
 
 ## Dependencies

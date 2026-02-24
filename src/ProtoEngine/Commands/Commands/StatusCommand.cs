@@ -18,31 +18,51 @@ public class StatusCommand : ICommand
 
         var lines = new List<string>();
         lines.Add($"== {desc?.Name ?? "Adventurer"} ==");
-        lines.Add($"  Level:        {stats?.Level ?? 1}");
-        lines.Add($"  HP:           {health?.Current ?? 0}/{health?.Max ?? 0}");
-        lines.Add($"  Experience:   {stats?.Experience ?? 0}/{stats?.ExperienceToNextLevel ?? 100}");
-        lines.Add($"  Strength:     {stats?.Strength ?? 0}");
-        lines.Add($"  Dexterity:    {stats?.Dexterity ?? 0}");
-        lines.Add($"  Intelligence: {stats?.Intelligence ?? 0}");
-        lines.Add($"  Gold:         {stats?.Gold ?? 0}");
+        lines.Add($"  Level: {stats?.Level ?? 1}");
+        lines.Add($"  HP:    {health?.Current ?? 0}/{health?.Max ?? 0}");
+        lines.Add($"  XP:    {stats?.Experience ?? 0}/{stats?.ExperienceToNextLevel ?? 100}");
+        lines.Add($"  STR:   {stats?.Strength ?? 0}");
+        lines.Add($"  DEX:   {stats?.Dexterity ?? 0}");
+        lines.Add($"  FOR:   {stats?.Fortitude ?? 0}");
+        lines.Add($"  AGI:   {stats?.Agility ?? 0}");
+        lines.Add($"  WIL:   {stats?.Willpower ?? 0}");
+        lines.Add($"  INT:   {stats?.Intelligence ?? 0}");
+        lines.Add($"  PER:   {stats?.Perception ?? 0}");
+        lines.Add($"  CHA:   {stats?.Charisma ?? 0}");
+        lines.Add($"  Gold:  {stats?.Gold ?? 0}");
 
         if (equipment is not null)
         {
             lines.Add("");
             lines.Add("Wielding:");
-            var leftHand = equipment.GetSlotItems(EquipmentSlot.WieldLeft).FirstOrDefault();
-            var rightHand = equipment.GetSlotItems(EquipmentSlot.WieldRight).FirstOrDefault();
-            lines.Add($"  Left Hand:  {leftHand?.ItemName ?? "(unarmed)"}");
-            lines.Add($"  Right Hand: {rightHand?.ItemName ?? "(unarmed)"}");
+            var leftHand = equipment.GetSlotItem(EquipmentSlot.WieldLeft);
+            var rightHand = equipment.GetSlotItem(EquipmentSlot.WieldRight);
+            lines.Add($"  Left:  {leftHand?.ItemName ?? "(unarmed)"}");
+            lines.Add($"  Right: {rightHand?.ItemName ?? "(unarmed)"}");
 
             lines.Add("");
             lines.Add("Wearing:");
-            var body = equipment.GetSlotItems(EquipmentSlot.Body).FirstOrDefault();
-            var leftGlove = equipment.GetSlotItems(EquipmentSlot.LeftHand).FirstOrDefault();
-            var rightGlove = equipment.GetSlotItems(EquipmentSlot.RightHand).FirstOrDefault();
-            lines.Add($"  Armor:       {body?.ItemName ?? "(none)"}");
-            lines.Add($"  Left Glove:  {leftGlove?.ItemName ?? "(none)"}");
-            lines.Add($"  Right Glove: {rightGlove?.ItemName ?? "(none)"}");
+            var head = equipment.GetSlotItem(EquipmentSlot.Head);
+            var body = equipment.GetSlotItem(EquipmentSlot.Body);
+            var arms = equipment.GetSlotItem(EquipmentSlot.Arms);
+            var belt = equipment.GetSlotItem(EquipmentSlot.Belt);
+            var legs = equipment.GetSlotItem(EquipmentSlot.Legs);
+            var feet = equipment.GetSlotItem(EquipmentSlot.Feet);
+            lines.Add($"  Head: {head?.ItemName ?? "(none)"}");
+            lines.Add($"  Body: {body?.ItemName ?? "(none)"}");
+            lines.Add($"  Arms: {arms?.ItemName ?? "(none)"}");
+            lines.Add($"  Belt: {belt?.ItemName ?? "(none)"}");
+            lines.Add($"  Legs: {legs?.ItemName ?? "(none)"}");
+            lines.Add($"  Feet: {feet?.ItemName ?? "(none)"}");
+
+            lines.Add("");
+            lines.Add("Accessories:");
+            var acc1 = equipment.GetSlotItem(EquipmentSlot.Accessory1);
+            var acc2 = equipment.GetSlotItem(EquipmentSlot.Accessory2);
+            var acc3 = equipment.GetSlotItem(EquipmentSlot.Accessory3);
+            lines.Add($"  Acc 1: {acc1?.ItemName ?? "(none)"}");
+            lines.Add($"  Acc 2: {acc2?.ItemName ?? "(none)"}");
+            lines.Add($"  Acc 3: {acc3?.ItemName ?? "(none)"}");
         }
 
         if (effects?.Effects.Count > 0)
