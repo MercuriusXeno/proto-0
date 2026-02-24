@@ -3,35 +3,138 @@
 @using ProtoEngine.Data
 
 <div class="map-panel panel">
-    <h3>Exits</h3>
-    @if (_currentRoom is not null)
-    {
-        <div class="room-name">@_currentRoom.Name</div>
-        <div class="exits-grid">
-            @foreach (var exit in _currentRoom.Exits)
-            {
-                <button class="exit-btn" @onclick="() => Navigate(exit.Key)">
-                    @exit.Key.ToUpperInvariant()
-                </button>
-            }
-        </div>
-    }
+    <h3>Compass</h3>
+    <svg viewBox="-150 -180 300 360" class="map-svg">
+        <!-- Draw connections from center to adjacent rooms -->
+        @foreach (var node in _adjacentNodes)
+        {
+            <line x1="0" y1="0"
+                  x2="@node.X" y2="@node.Y"
+                  class="map-connection" />
+        }
+
+        <!-- Draw center (current room) -->
+        <g class="map-node current">
+            <circle cx="0" cy="0" r="15" class="node-outline" />
+            <circle cx="0" cy="0" r="12" class="node-fill" />
+            <svg:text x="0" y="5" text-anchor="middle" class="center-label">YOU</svg:text>
+        </g>
+
+        <!-- Draw adjacent rooms -->
+        @foreach (var node in _adjacentNodes)
+        {
+            var nodeClass = node.IsCurrent ? "map-node current" :
+                           node.IsExplored ? "map-node explored" : "map-node unexplored";
+
+            <g class="@nodeClass">
+                <circle cx="@node.X" cy="@node.Y" r="10" class="node-outline" />
+                <circle cx="@node.X" cy="@node.Y" r="8" class="node-fill" />
+
+                <!-- Direction label above node -->
+                <svg:text x="@node.X" y="@(node.Y - 18)" text-anchor="middle" class="direction-label">@node.Direction.ToUpper()</svg:text>
+
+                <!-- Room name below node (only if explored) -->
+                @if (node.IsExplored)
+                {
+                    <svg:text x="@node.X" y="@(node.Y + 20)" text-anchor="middle" class="room-label">@node.Label</svg:text>
+                }
+            </g>
+        }
+    </svg>
 </div>
 
 @code {
     [Parameter] public EventCallback<string> OnNavigate { get; set; }
 
-    private RoomData? _currentRoom;
+    private List<CompassNode> _adjacentNodes = new();
+    private const double CompassRadius = 100.0;
+    private const double VerticalSpacing = 130.0; // Extra spacing for Up/Down
 
     public void Refresh()
     {
         if (Host.World is null || Host.State is null) return;
-        _currentRoom = Host.World.GetPlayerRoom(Host.State);
+        BuildCompassRose();
         StateHasChanged();
     }
 
-    private async Task Navigate(string direction)
+    private void BuildCompassRose()
     {
-        await OnNavigate.InvokeAsync($"go {direction}");
+        _adjacentNodes.Clear();
+
+        if (Host.World is null || Host.State is null) return;
+
+        var currentRoom = Host.World.GetPlayerRoom(Host.State);
+        if (currentRoom is null) return;
+
+        var explored = Host.State.Player.Get<ExploredRoomsComponent>();
+        var visitedRoomIds = explored?.VisitedRoomIds ?? new HashSet<string>();
+
+        // Process each exit from current room
+        foreach (var exit in currentRoom.Exits)
+        {
+            var direction = exit.Key.ToLowerInvariant();
+            var targetRoomId = exit.Value;
+            var targetRoom = Host.World.GetRoom(targetRoomId);
+
+            if (targetRoom is null) continue;
+
+            var isExplored = visitedRoomIds.Contains(targetRoomId);
+            var (x, y) = GetCompassPosition(direction);
+
+            _adjacentNodes.Add(new CompassNode
+            {
+                Direction = direction,
+                Label = GetRoomLabel(targetRoom.Name),
+                X = x,
+                Y = y,
+                IsExplored = isExplored,
+                IsCurrent = false
+            });
+        }
+    }
+
+    private (double X, double Y) GetCompassPosition(string direction)
+    {
+        // Simple orthogonal compass rose
+        return direction switch
+        {
+            "north" or "n" => (0, -CompassRadius),
+            "northeast" or "ne" => (CompassRadius * 0.707, -CompassRadius * 0.707),
+            "east" or "e" => (CompassRadius, 0),
+            "southeast" or "se" => (CompassRadius * 0.707, CompassRadius * 0.707),
+            "south" or "s" => (0, CompassRadius),
+            "southwest" or "sw" => (-CompassRadius * 0.707, CompassRadius * 0.707),
+            "west" or "w" => (-CompassRadius, 0),
+            "northwest" or "nw" => (-CompassRadius * 0.707, -CompassRadius * 0.707),
+
+            // Up goes above North, Down goes below South
+            "up" or "u" => (0, -VerticalSpacing),
+            "down" or "d" => (0, VerticalSpacing),
+
+            _ => (0, 0)
+        };
+    }
+
+    private string GetRoomLabel(string roomName)
+    {
+        if (roomName.Length <= 10) return roomName;
+
+        var words = roomName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (words.Length > 1)
+        {
+            return string.Join("", words.Select(w => char.ToUpper(w[0])));
+        }
+
+        return roomName.Substring(0, 8) + "..";
+    }
+
+    private class CompassNode
+    {
+        public string Direction { get; set; } = "";
+        public string Label { get; set; } = "";
+        public double X { get; set; }
+        public double Y { get; set; }
+        public bool IsCurrent { get; set; }
+        public bool IsExplored { get; set; }
     }
 }
