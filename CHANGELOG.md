@@ -7,6 +7,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ## [Unreleased]
 
 ### Added
+- `CommandClassifier` static class for centralized command type classification (look vs navigation vs other)
+- `SaveDataMapper` class extracting save/load property mapping out of GameSessionHost
 - Exercise-based stat growth system with geometric compounding thresholds (`StatGrowthSystem`)
 - `StatType` enum for type-safe stat references across systems
 - `ExerciseComponent` tracking accumulated exercise progress per stat
@@ -43,6 +45,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - Direction labels above nodes, room names below (if explored)
 
 ### Changed
+- **P2 Refactoring**: SOLID cleanup across 6 phases — broke up god methods, eliminated duplication, extracted helpers
+- `LookCommand.Execute()` refactored from monolith into orchestrator + `BuildItemLines()`, `BuildNpcLines()`, `BuildExitLines()` internal static methods
+- `StatusCommand.Execute()` refactored to use loops over `StatType` enum and equipment slot tuples instead of repetitive code
+- `MoveCommand.ExecuteWithVerb()` refactored with extracted `ResolveDirection()` and `TrackExploration()` helpers
+- `AttackCommand.Execute()` refactored with extracted `HandleTargetKilled()` and `AppendPlayerHealth()` helpers
+- `GameSessionHost` refactored: save/load logic moved to `SaveDataMapper`, system/command registration extracted to dedicated methods
+- Terminal and Game.razor command routing deduplicated via `CommandClassifier` and `Terminal.ExecuteCommand()` public API
 - Terminal redesigned with split panels: persistent room description (top) + action/conversation output (bottom)
 - StatusCommand now differentiates between worn items (armor/clothing) and wielded items (weapons/shields)
 - Left sidebar split into PlayerInfoPanel (top) and MapPanel (bottom)

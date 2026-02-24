@@ -4,6 +4,29 @@ namespace ProtoEngine.Commands.Commands;
 
 public class StatusCommand : ICommand
 {
+    private static readonly (EquipmentSlot Slot, string Label)[] WieldSlots =
+    [
+        (EquipmentSlot.WieldLeft, "Left"),
+        (EquipmentSlot.WieldRight, "Right")
+    ];
+
+    private static readonly (EquipmentSlot Slot, string Label)[] ArmorSlots =
+    [
+        (EquipmentSlot.Head, "Head"),
+        (EquipmentSlot.Body, "Body"),
+        (EquipmentSlot.Arms, "Arms"),
+        (EquipmentSlot.Belt, "Belt"),
+        (EquipmentSlot.Legs, "Legs"),
+        (EquipmentSlot.Feet, "Feet")
+    ];
+
+    private static readonly (EquipmentSlot Slot, string Label)[] AccessorySlots =
+    [
+        (EquipmentSlot.Accessory1, "Acc 1"),
+        (EquipmentSlot.Accessory2, "Acc 2"),
+        (EquipmentSlot.Accessory3, "Acc 3")
+    ];
+
     public string Verb => "status";
     public string[] Aliases => ["stats", "hp"];
     public string Description => "View your character status and stats";
@@ -21,48 +44,17 @@ public class StatusCommand : ICommand
         lines.Add($"  Level: {stats?.Level ?? 1}");
         lines.Add($"  HP:    {health?.Current ?? 0}/{health?.Max ?? 0}");
         lines.Add($"  XP:    {stats?.Experience ?? 0}/{stats?.ExperienceToNextLevel ?? 100}");
-        lines.Add($"  STR:   {stats?.Strength ?? 0}");
-        lines.Add($"  DEX:   {stats?.Dexterity ?? 0}");
-        lines.Add($"  FOR:   {stats?.Fortitude ?? 0}");
-        lines.Add($"  AGI:   {stats?.Agility ?? 0}");
-        lines.Add($"  WIL:   {stats?.Willpower ?? 0}");
-        lines.Add($"  INT:   {stats?.Intelligence ?? 0}");
-        lines.Add($"  PER:   {stats?.Perception ?? 0}");
-        lines.Add($"  CHA:   {stats?.Charisma ?? 0}");
+
+        foreach (var stat in Enum.GetValues<StatType>())
+            lines.Add($"  {ToAbbreviation(stat)}:   {stats?.GetStat(stat) ?? 0}");
+
         lines.Add($"  Gold:  {stats?.Gold ?? 0}");
 
         if (equipment is not null)
         {
-            lines.Add("");
-            lines.Add("Wielding:");
-            var leftHand = equipment.GetSlotItem(EquipmentSlot.WieldLeft);
-            var rightHand = equipment.GetSlotItem(EquipmentSlot.WieldRight);
-            lines.Add($"  Left:  {leftHand?.ItemName ?? "(unarmed)"}");
-            lines.Add($"  Right: {rightHand?.ItemName ?? "(unarmed)"}");
-
-            lines.Add("");
-            lines.Add("Wearing:");
-            var head = equipment.GetSlotItem(EquipmentSlot.Head);
-            var body = equipment.GetSlotItem(EquipmentSlot.Body);
-            var arms = equipment.GetSlotItem(EquipmentSlot.Arms);
-            var belt = equipment.GetSlotItem(EquipmentSlot.Belt);
-            var legs = equipment.GetSlotItem(EquipmentSlot.Legs);
-            var feet = equipment.GetSlotItem(EquipmentSlot.Feet);
-            lines.Add($"  Head: {head?.ItemName ?? "(none)"}");
-            lines.Add($"  Body: {body?.ItemName ?? "(none)"}");
-            lines.Add($"  Arms: {arms?.ItemName ?? "(none)"}");
-            lines.Add($"  Belt: {belt?.ItemName ?? "(none)"}");
-            lines.Add($"  Legs: {legs?.ItemName ?? "(none)"}");
-            lines.Add($"  Feet: {feet?.ItemName ?? "(none)"}");
-
-            lines.Add("");
-            lines.Add("Accessories:");
-            var acc1 = equipment.GetSlotItem(EquipmentSlot.Accessory1);
-            var acc2 = equipment.GetSlotItem(EquipmentSlot.Accessory2);
-            var acc3 = equipment.GetSlotItem(EquipmentSlot.Accessory3);
-            lines.Add($"  Acc 1: {acc1?.ItemName ?? "(none)"}");
-            lines.Add($"  Acc 2: {acc2?.ItemName ?? "(none)"}");
-            lines.Add($"  Acc 3: {acc3?.ItemName ?? "(none)"}");
+            AppendSlotGroup(lines, "Wielding:", WieldSlots, equipment, "(unarmed)");
+            AppendSlotGroup(lines, "Wearing:", ArmorSlots, equipment, "(none)");
+            AppendSlotGroup(lines, "Accessories:", AccessorySlots, equipment, "(none)");
         }
 
         if (effects?.Effects.Count > 0)
@@ -75,4 +67,36 @@ public class StatusCommand : ICommand
 
         return CommandResult.Ok(lines.ToArray());
     }
+
+    private static void AppendSlotGroup(
+        List<string> lines,
+        string header,
+        (EquipmentSlot Slot, string Label)[] slots,
+        EquipmentComponent equipment,
+        string emptyLabel)
+    {
+        lines.Add("");
+        lines.Add(header);
+        foreach (var (slot, label) in slots)
+        {
+            var item = equipment.GetSlotItem(slot);
+            lines.Add($"  {label}: {item?.ItemName ?? emptyLabel}");
+        }
+    }
+
+    /// <summary>
+    /// Converts a StatType to its 3-letter abbreviation for display.
+    /// </summary>
+    internal static string ToAbbreviation(StatType stat) => stat switch
+    {
+        StatType.Strength => "STR",
+        StatType.Dexterity => "DEX",
+        StatType.Fortitude => "FOR",
+        StatType.Agility => "AGI",
+        StatType.Willpower => "WIL",
+        StatType.Intelligence => "INT",
+        StatType.Perception => "PER",
+        StatType.Charisma => "CHA",
+        _ => stat.ToString()[..3].ToUpperInvariant()
+    };
 }

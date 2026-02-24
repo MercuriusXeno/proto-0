@@ -121,6 +121,18 @@
         StateHasChanged();
     }
 
+    /// <summary>
+    /// Executes a command string and routes the result to the appropriate panel.
+    /// </summary>
+    public async Task ExecuteCommand(string command)
+    {
+        var result = await Host.ProcessCommandAsync(command);
+        RouteCommandResult(command, result);
+        await OnCommandExecuted.InvokeAsync();
+        StateHasChanged();
+        await ScrollToBottom();
+    }
+
     private async Task HandleKeyDown(KeyboardEventArgs e)
     {
         if (e.Key == "Enter" && !string.IsNullOrWhiteSpace(_currentInput))
@@ -131,47 +143,7 @@
             _commandHistory.Add(input);
             _historyIndex = _commandHistory.Count;
 
-            var result = await Host.ProcessCommandAsync(input);
-
-            var cssClass = result.Success ? "" : "error";
-
-            // Check if this is a look command - if so, update room description panel
-            if (IsLookCommand(input))
-            {
-                WriteRoomDescription(result, cssClass);
-                _actionOutputLines.Clear(); // Clear action panel
-            }
-            else if (IsNavigationCommand(input))
-            {
-                // Navigation commands - clear action panel and show movement result
-                _actionOutputLines.Clear();
-                WriteCommandResultToPanel(result, cssClass, _actionOutputLines);
-
-                // Auto-look after navigation if enabled
-                if (AutoLookAfterMove)
-                {
-                    var lookResult = await Host.ProcessCommandAsync("look");
-                    WriteRoomDescription(lookResult, lookResult.Success ? "" : "error");
-                }
-            }
-            else
-            {
-                // Other commands - clear action panel and show result
-                _actionOutputLines.Clear();
-                WriteCommandResultToPanel(result, cssClass, _actionOutputLines);
-
-                // If command changed room state, refresh room description
-                if (result.RefreshRoomDescription)
-                {
-                    var lookResult = await Host.ProcessCommandAsync("look");
-                    WriteRoomDescription(lookResult, lookResult.Success ? "" : "error");
-                }
-            }
-
-            await OnCommandExecuted.InvokeAsync();
-            StateHasChanged();
-
-            await ScrollToBottom();
+            await ExecuteCommand(input);
         }
         else if (e.Key == "ArrowUp")
         {
@@ -196,12 +168,50 @@
         }
     }
 
+    private void RouteCommandResult(string command, CommandResult result)
+    {
+        var cssClass = result.Success ? "" : "error";
+
+        if (CommandClassifier.IsLookCommand(command))
+        {
+            WriteRoomDescription(result, cssClass);
+            _actionOutputLines.Clear();
+        }
+        else if (CommandClassifier.IsNavigationCommand(command))
+        {
+            _actionOutputLines.Clear();
+            WriteCommandResultToPanel(result, cssClass, _actionOutputLines);
+            AutoLookAfterNavigation();
+        }
+        else
+        {
+            _actionOutputLines.Clear();
+            WriteCommandResultToPanel(result, cssClass, _actionOutputLines);
+            if (result.RefreshRoomDescription)
+                RefreshRoomDescription();
+        }
+    }
+
+    private async void AutoLookAfterNavigation()
+    {
+        if (!AutoLookAfterMove)
+            return;
+
+        var lookResult = await Host.ProcessCommandAsync("look");
+        WriteRoomDescription(lookResult, lookResult.Success ? "" : "error");
+    }
+
+    private async void RefreshRoomDescription()
+    {
+        var lookResult = await Host.ProcessCommandAsync("look");
+        WriteRoomDescription(lookResult, lookResult.Success ? "" : "error");
+    }
+
     private async Task ScrollToBottom()
     {
         try
         {
             await Task.Yield();
-            // Scroll handled by CSS overflow + JS interop fallback
         }
         catch { }
     }
@@ -214,63 +224,7 @@
     private async Task HandleEntityCommand(string command)
     {
         if (Host == null) return;
-
-        var result = await Host.ProcessCommandAsync(command);
-
-        var cssClass = result.Success ? "" : "error";
-
-        // Check if this is a look command - if so, update room description panel
-        if (IsLookCommand(command))
-        {
-            WriteRoomDescription(result, cssClass);
-            _actionOutputLines.Clear(); // Clear action panel
-        }
-        else if (IsNavigationCommand(command))
-        {
-            // Navigation commands - clear action panel and show movement result
-            _actionOutputLines.Clear();
-            WriteCommandResultToPanel(result, cssClass, _actionOutputLines);
-
-            // Auto-look after navigation if enabled
-            if (AutoLookAfterMove)
-            {
-                var lookResult = await Host.ProcessCommandAsync("look");
-                WriteRoomDescription(lookResult, lookResult.Success ? "" : "error");
-            }
-        }
-        else
-        {
-            // Other commands - clear action panel and show result
-            _actionOutputLines.Clear();
-            WriteCommandResultToPanel(result, cssClass, _actionOutputLines);
-
-            // If command changed room state, refresh room description
-            if (result.RefreshRoomDescription)
-            {
-                var lookResult = await Host.ProcessCommandAsync("look");
-                WriteRoomDescription(lookResult, lookResult.Success ? "" : "error");
-            }
-        }
-
-        await OnCommandExecuted.InvokeAsync();
-        StateHasChanged();
-
-        await ScrollToBottom();
-    }
-
-    private bool IsLookCommand(string command)
-    {
-        var commandLower = command.Trim().ToLowerInvariant();
-        return commandLower == "look" || commandLower == "l" ||
-               commandLower.StartsWith("look ") || commandLower.StartsWith("l ");
-    }
-
-    private bool IsNavigationCommand(string command)
-    {
-        var commandLower = command.Trim().ToLowerInvariant();
-        return commandLower.StartsWith("go") || commandLower.StartsWith("move") ||
-               commandLower is "north" or "south" or "east" or "west" or "up" or "down" or
-               "n" or "s" or "e" or "w" or "u" or "d";
+        await ExecuteCommand(command);
     }
 
     private RenderFragment RenderRichLine(TerminalLine line) => builder =>
@@ -283,11 +237,9 @@
             var idx = text.IndexOf(entity.DisplayName, offset, StringComparison.OrdinalIgnoreCase);
             if (idx >= 0)
             {
-                // Text before entity
                 if (idx > offset)
                     builder.AddContent(0, text.Substring(offset, idx - offset));
 
-                // Entity button
                 builder.OpenComponent<EntityButton>(1);
                 builder.AddAttribute(2, "Entity", entity);
                 builder.AddAttribute(3, "OnCommand", EventCallback.Factory.Create<string>(this, HandleEntityCommand));
@@ -297,7 +249,6 @@
             }
         }
 
-        // Remaining text
         if (offset < text.Length)
             builder.AddContent(4, text.Substring(offset));
     };

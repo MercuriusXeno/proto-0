@@ -10,6 +10,12 @@ public class MoveCommand : ICommand
         "north", "south", "east", "west", "up", "down", "n", "s", "e", "w", "u", "d"
     };
 
+    private static readonly Dictionary<string, string> Abbreviations = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["n"] = "north", ["s"] = "south", ["e"] = "east",
+        ["w"] = "west", ["u"] = "up", ["d"] = "down"
+    };
+
     private readonly WorldSystem _world;
     private readonly ActionLogSystem _actionLog;
 
@@ -30,55 +36,49 @@ public class MoveCommand : ICommand
 
     public CommandResult ExecuteWithVerb(CommandContext context, string[] args, string? originalVerb)
     {
-        string direction;
-
-        if (args.Length > 0)
-        {
-            direction = args[0].ToLowerInvariant();
-        }
-        else if (originalVerb is not null && DirectionWords.Contains(originalVerb))
-        {
-            // User typed a direction directly (e.g., "north")
-            direction = originalVerb.ToLowerInvariant();
-        }
-        else
-        {
+        var direction = ResolveDirection(args, originalVerb);
+        if (direction is null)
             return CommandResult.Fail("Go where? Specify a direction (north, south, east, west, up, down).");
-        }
-
-        // Expand abbreviations
-        direction = direction switch
-        {
-            "n" => "north",
-            "s" => "south",
-            "e" => "east",
-            "w" => "west",
-            "u" => "up",
-            "d" => "down",
-            _ => direction
-        };
 
         var currentRoom = _world.GetPlayerRoom(context.State);
         if (currentRoom is null)
             return CommandResult.Fail("You are nowhere.");
 
-        if (_world.TryMove(context.State, direction, out var newRoomId))
+        if (!_world.TryMove(context.State, direction, out var newRoomId))
+            return CommandResult.Fail($"You can't go {direction} from here.");
+
+        TrackExploration(context, newRoomId!);
+        _actionLog.LogMovement(context.State, currentRoom.Name, direction, newRoomId!);
+
+        return CommandResult.Ok($"You head {direction}.");
+    }
+
+    /// <summary>
+    /// Parses direction from command arguments or the original verb, expanding abbreviations.
+    /// Returns null if no valid direction could be determined.
+    /// </summary>
+    internal static string? ResolveDirection(string[] args, string? originalVerb)
+    {
+        string raw;
+        if (args.Length > 0)
+            raw = args[0];
+        else if (originalVerb is not null && DirectionWords.Contains(originalVerb))
+            raw = originalVerb;
+        else
+            return null;
+
+        var lower = raw.ToLowerInvariant();
+        return Abbreviations.TryGetValue(lower, out var expanded) ? expanded : lower;
+    }
+
+    private static void TrackExploration(CommandContext context, string newRoomId)
+    {
+        var explored = context.State.Player.Get<ExploredRoomsComponent>();
+        if (explored == null)
         {
-            // Track visited room
-            var explored = context.State.Player.Get<ExploredRoomsComponent>();
-            if (explored == null)
-            {
-                explored = new ExploredRoomsComponent();
-                context.State.Player.Add(explored);
-            }
-            explored.VisitedRoomIds.Add(newRoomId!);
-
-            // Log the movement
-            _actionLog.LogMovement(context.State, currentRoom.Name, direction, newRoomId!);
-
-            return CommandResult.Ok($"You head {direction}.");
+            explored = new ExploredRoomsComponent();
+            context.State.Player.Add(explored);
         }
-
-        return CommandResult.Fail($"You can't go {direction} from here.");
+        explored.VisitedRoomIds.Add(newRoomId);
     }
 }

@@ -10,10 +10,11 @@ This is a text-based dungeon RPG built with C# .NET 9.0 and Blazor WebAssembly. 
 
 - **ProtoEngine** (`src/ProtoEngine/`): Core game logic library
   - Platform-agnostic, contains all game systems, components, and commands
-  - `Commands/` — Player commands including EntityReference and OutputLine for rich output
+  - `Commands/` — Player commands, EntityReference, OutputLine for rich output, CommandClassifier for UI routing
   - `Components/` — Data components including EquipmentComponent (11 slots), StatsComponent (8 stats), ExerciseComponent, ExploredRoomsComponent, StatType enum
   - `Systems/` — Game systems including ActionLogSystem, NpcSystem, WorldSystem, InventorySystem, CombatSystem, StatGrowthSystem
   - `Data/` — Content structures including NpcDisposition, RoomData with ExitPreviews
+  - `Persistence/` — Save/load: SaveData, SaveDataMapper, ISaveLoadService
 - **ProtoMud** (`src/ProtoMud/`): Blazor WebAssembly UI layer
   - Hosts the engine and provides the browser-based interface
   - 3-column layout: PlayerInfo/Map (left split), Terminal/ActionBar (center), Action Log (right)
@@ -95,7 +96,8 @@ dotnet build
 **GameSessionHost** (`ProtoMud/Services/GameSessionHost.cs`):
 - Blazor service that hosts the engine
 - Loads game content from JSON files in `wwwroot/data/`
-- Creates and wires up all systems and commands
+- Creates and wires up all systems and commands via `RegisterSystems()`/`RegisterCommands()`
+- Delegates save/load mapping to `SaveDataMapper`
 - Handles auto-save after each command
 - Exposes systems to UI for rendering (World, Player, Inventory, etc.)
 
@@ -166,10 +168,12 @@ dotnet build
 
 ### Terminal Behavior
 - **Split Panels**: Room description (persistent) + action/conversation output (clears on each command)
+- **Command Routing**: `CommandClassifier` (in ProtoEngine) classifies commands; Terminal's `RouteCommandResult()` directs output to the correct panel
 - **Room-viewing commands** (look, move, directional): Update room description panel
 - **Other commands**: Display results in action panel
 - **Auto-look**: Navigation commands can auto-execute "look" (toggleable checkbox)
 - **Real-time updates**: Commands can set `RefreshRoomDescription = true` to update room panel immediately
+- **Public API**: `Terminal.ExecuteCommand(string)` — single entry point for external callers (ActionBar, MapPanel)
 
 ### Interactive Buttons (Rich Output System)
 - **EntityReference**: Metadata for clickable entities (items, NPCs, exits) with available actions and optional tooltip text

@@ -2,7 +2,6 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using ProtoEngine.Commands;
 using ProtoEngine.Commands.Commands;
-using ProtoEngine.Components;
 using ProtoEngine.Core;
 using ProtoEngine.Data;
 using ProtoEngine.Events;
@@ -17,9 +16,8 @@ public class GameSessionHost
     private readonly HttpClient _http;
     private readonly ISaveLoadService _saveService;
     private GameSession? _session;
-    private ContentManifest? _content;
+    private SaveDataMapper? _saveMapper;
 
-    // Systems exposed for UI panels
     public WorldSystem? World { get; private set; }
     public PlayerSystem? Player { get; private set; }
     public InventorySystem? Inventory { get; private set; }
@@ -47,7 +45,56 @@ public class GameSessionHost
 
     public async Task InitializeAsync()
     {
-        _content = new ContentManifest
+        var content = await LoadContent();
+
+        var state = new GameState();
+        var eventBus = new EventBus();
+        var parser = new CommandParser();
+        var registry = new CommandRegistry();
+
+        RegisterSystems(content, eventBus, state, parser, registry);
+        RegisterCommands(registry);
+
+        _session!.Initialize();
+        _saveMapper = new SaveDataMapper(content.Items);
+    }
+
+    public async Task<CommandResult> ProcessCommandAsync(string input)
+    {
+        if (_session is null)
+            return CommandResult.Fail("Game not initialized.");
+
+        var result = _session.ProcessCommand(input);
+
+        if (result.Success)
+        {
+            var saveData = _saveMapper!.CreateSaveData(_session.State);
+            await _saveService.SaveAsync(saveData);
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Creates a SaveData snapshot of the current game state.
+    /// </summary>
+    public SaveData CreateSaveData()
+    {
+        return _saveMapper!.CreateSaveData(_session!.State);
+    }
+
+    /// <summary>
+    /// Restores game state from a SaveData snapshot.
+    /// </summary>
+    public void RestoreFromSave(SaveData save)
+    {
+        if (_session is null) return;
+        _saveMapper!.RestoreFromSave(_session.State, save);
+    }
+
+    private async Task<ContentManifest> LoadContent()
+    {
+        return new ContentManifest
         {
             Rooms = await LoadJson<List<RoomData>>("data/rooms.json") ?? new(),
             Items = await LoadJson<List<ItemData>>("data/items.json") ?? new(),
@@ -57,20 +104,17 @@ public class GameSessionHost
             Dialogues = await LoadJson<List<DialogueData>>("data/dialogue.json") ?? new(),
             StartingRoomId = "town_square"
         };
+    }
 
-        var state = new GameState();
-        var eventBus = new EventBus();
-        var parser = new CommandParser();
-        var registry = new CommandRegistry();
-
-        // Create systems
-        World = new WorldSystem(_content, eventBus);
+    private void RegisterSystems(ContentManifest content, EventBus eventBus, GameState state, CommandParser parser, CommandRegistry registry)
+    {
+        World = new WorldSystem(content, eventBus);
         Player = new PlayerSystem(eventBus);
-        Inventory = new InventorySystem(_content, eventBus);
-        Combat = new CombatSystem(_content, eventBus);
-        Npc = new NpcSystem(_content, eventBus);
-        Quest = new QuestSystem(_content, eventBus);
-        Crafting = new CraftingSystem(_content, eventBus);
+        Inventory = new InventorySystem(content, eventBus);
+        Combat = new CombatSystem(content, eventBus);
+        Npc = new NpcSystem(content, eventBus);
+        Quest = new QuestSystem(content, eventBus);
+        Crafting = new CraftingSystem(content, eventBus);
         ActionLog = new ActionLogSystem();
         StatGrowth = new StatGrowthSystem(eventBus);
         var statusEffects = new StatusEffectSystem();
@@ -79,7 +123,6 @@ public class GameSessionHost
 
         _session = new GameSession(state, parser, registry, eventBus);
 
-        // Register systems
         _session.RegisterSystem(World);
         _session.RegisterSystem(Player);
         _session.RegisterSystem(Inventory);
@@ -92,139 +135,27 @@ public class GameSessionHost
         _session.RegisterSystem(statusEffects);
         _session.RegisterSystem(time);
         _session.RegisterSystem(events);
+    }
 
-        // Register commands
-        registry.Register(new LookCommand(World, Inventory));
-        registry.Register(new MoveCommand(World, ActionLog));
-        registry.Register(new InventoryCommand(Inventory));
-        registry.Register(new TakeCommand(Inventory, ActionLog));
-        registry.Register(new DropCommand(Inventory));
-        registry.Register(new UseCommand(Inventory));
-        registry.Register(new WearCommand(Inventory));
-        registry.Register(new WieldCommand(Inventory));
+    private void RegisterCommands(CommandRegistry registry)
+    {
+        registry.Register(new LookCommand(World!, Inventory!));
+        registry.Register(new MoveCommand(World!, ActionLog!));
+        registry.Register(new InventoryCommand(Inventory!));
+        registry.Register(new TakeCommand(Inventory!, ActionLog!));
+        registry.Register(new DropCommand(Inventory!));
+        registry.Register(new UseCommand(Inventory!));
+        registry.Register(new WearCommand(Inventory!));
+        registry.Register(new WieldCommand(Inventory!));
         registry.Register(new UnwieldCommand());
-        registry.Register(new AttackCommand(Combat, Player, ActionLog));
-        registry.Register(new TalkCommand(Npc, World));
+        registry.Register(new AttackCommand(Combat!, Player!, ActionLog!));
+        registry.Register(new TalkCommand(Npc!, World!));
         registry.Register(new StatusCommand());
-        registry.Register(new CraftCommand(Crafting));
-        registry.Register(new QuestCommand(Quest));
+        registry.Register(new CraftCommand(Crafting!));
+        registry.Register(new QuestCommand(Quest!));
         registry.Register(new SaveCommand());
         registry.Register(new LoadCommand());
         registry.Register(new HelpCommand(registry));
-
-        _session.Initialize();
-    }
-
-    public async Task<CommandResult> ProcessCommandAsync(string input)
-    {
-        if (_session is null)
-            return CommandResult.Fail("Game not initialized.");
-
-        var result = _session.ProcessCommand(input);
-
-        // Auto-save after each command
-        if (result.Success)
-        {
-            var saveData = CreateSaveData();
-            await _saveService.SaveAsync(saveData);
-        }
-
-        return result;
-    }
-
-    public SaveData CreateSaveData()
-    {
-        var state = _session!.State;
-        var pos = state.Player.Get<PositionComponent>();
-        var health = state.Player.Get<HealthComponent>();
-        var stats = state.Player.Get<StatsComponent>();
-        var inv = state.Player.Get<InventoryComponent>();
-        var equip = state.Player.Get<EquipmentComponent>();
-        var exercise = state.Player.Get<ExerciseComponent>();
-
-        return new SaveData
-        {
-            ClockTick = state.Clock.Tick,
-            PlayerRoomId = pos?.RoomId ?? "town_square",
-            PlayerHealth = health?.Current ?? 100,
-            PlayerMaxHealth = health?.Max ?? 100,
-            PlayerLevel = stats?.Level ?? 1,
-            PlayerExperience = stats?.Experience ?? 0,
-            PlayerStrength = stats?.Strength ?? 10,
-            PlayerDexterity = stats?.Dexterity ?? 10,
-            PlayerIntelligence = stats?.Intelligence ?? 10,
-            PlayerFortitude = stats?.Fortitude ?? 10,
-            PlayerAgility = stats?.Agility ?? 10,
-            PlayerWillpower = stats?.Willpower ?? 10,
-            PlayerPerception = stats?.Perception ?? 10,
-            PlayerCharisma = stats?.Charisma ?? 10,
-            PlayerGold = stats?.Gold ?? 0,
-            ExerciseProgress = exercise?.Progress != null
-                ? new Dictionary<StatType, double>(exercise.Progress)
-                : new(),
-            InventoryItemIds = inv?.ItemIds.ToList() ?? new(),
-            WeaponId = equip?.GetSlotItem(EquipmentSlot.WieldRight)?.ItemId,
-            ArmorId = equip?.GetSlotItem(EquipmentSlot.Body)?.ItemId,
-            SavedAt = DateTime.UtcNow
-        };
-    }
-
-    public void RestoreFromSave(SaveData save)
-    {
-        if (_session is null) return;
-        var state = _session.State;
-
-        state.Clock.Set(save.ClockTick);
-        var pos = state.Player.Get<PositionComponent>();
-        if (pos is not null) pos.RoomId = save.PlayerRoomId;
-
-        var health = state.Player.Get<HealthComponent>();
-        if (health is not null) { health.Current = save.PlayerHealth; health.Max = save.PlayerMaxHealth; }
-
-        var stats = state.Player.Get<StatsComponent>();
-        if (stats is not null)
-        {
-            stats.Level = save.PlayerLevel;
-            stats.Experience = save.PlayerExperience;
-            stats.Strength = save.PlayerStrength;
-            stats.Dexterity = save.PlayerDexterity;
-            stats.Intelligence = save.PlayerIntelligence;
-            stats.Fortitude = save.PlayerFortitude;
-            stats.Agility = save.PlayerAgility;
-            stats.Willpower = save.PlayerWillpower;
-            stats.Perception = save.PlayerPerception;
-            stats.Charisma = save.PlayerCharisma;
-            stats.Gold = save.PlayerGold;
-        }
-
-        var exercise = state.Player.Get<ExerciseComponent>();
-        if (exercise is not null && save.ExerciseProgress.Count > 0)
-        {
-            exercise.Progress = new Dictionary<StatType, double>(save.ExerciseProgress);
-        }
-
-        var inv = state.Player.Get<InventoryComponent>();
-        if (inv is not null) inv.ItemIds = save.InventoryItemIds.ToList();
-
-        var equip = state.Player.Get<EquipmentComponent>();
-        if (equip is not null)
-        {
-            // Restore weapon to WieldRight slot
-            if (save.WeaponId is not null)
-            {
-                var weaponData = _content?.Items.FirstOrDefault(i => i.Id == save.WeaponId);
-                if (weaponData is not null)
-                    equip.EquipItem(EquipmentSlot.WieldRight, save.WeaponId, weaponData.Name);
-            }
-
-            // Restore armor to Body slot
-            if (save.ArmorId is not null)
-            {
-                var armorData = _content?.Items.FirstOrDefault(i => i.Id == save.ArmorId);
-                if (armorData is not null)
-                    equip.EquipItem(EquipmentSlot.Body, save.ArmorId, armorData.Name);
-            }
-        }
     }
 
     private async Task<T?> LoadJson<T>(string path) where T : class

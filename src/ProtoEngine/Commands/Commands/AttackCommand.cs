@@ -32,35 +32,37 @@ public class AttackCommand : ICommand
             return CommandResult.Fail($"There is no '{targetName}' here to attack.");
 
         var desc = target.Get<DescriptionComponent>();
-
         _actionLog.LogCombat(context.State, $"Attacked {desc?.Name ?? "enemy"}!");
 
         var (damage, targetDied, messages) = _combat.Attack(context.State, target);
 
         if (targetDied)
-        {
-            if (desc is not null)
-            {
-                _actionLog.LogCombat(context.State, $"Slew {desc.Name} in cold blood!");
-            }
-
-            // Award experience
-            _player.TryAddExperience(context.State, 25, out var leveledUp);
-            messages.Add("You gain 25 experience.");
-            if (leveledUp)
-            {
-                var stats = context.Player.Get<StatsComponent>();
-                messages.Add($"** LEVEL UP! You are now level {stats?.Level}! **");
-            }
-        }
+            HandleTargetKilled(context, desc, messages);
         else
-        {
-            // Show enemy retaliation
-            var playerHealth = context.Player.Get<HealthComponent>();
-            if (playerHealth is not null)
-                messages.Add($"Your HP: {playerHealth.Current}/{playerHealth.Max}");
-        }
+            AppendPlayerHealth(context, messages);
 
         return CommandResult.Ok(messages.ToArray());
+    }
+
+    private void HandleTargetKilled(CommandContext context, DescriptionComponent? desc, List<string> messages)
+    {
+        if (desc is not null)
+            _actionLog.LogCombat(context.State, $"Slew {desc.Name} in cold blood!");
+
+        _player.TryAddExperience(context.State, 25, out var leveledUp);
+        messages.Add("You gain 25 experience.");
+
+        if (leveledUp)
+        {
+            var stats = context.Player.Get<StatsComponent>();
+            messages.Add($"** LEVEL UP! You are now level {stats?.Level}! **");
+        }
+    }
+
+    private static void AppendPlayerHealth(CommandContext context, List<string> messages)
+    {
+        var playerHealth = context.Player.Get<HealthComponent>();
+        if (playerHealth is not null)
+            messages.Add($"Your HP: {playerHealth.Current}/{playerHealth.Max}");
     }
 }

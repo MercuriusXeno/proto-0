@@ -43,7 +43,7 @@ else
     private MapPanel? _mapPanel;
     private ActionLogPanel? _actionLogPanel;
     private TimeWidget? _timeWidget;
-    private bool _autoLookAfterMove = true; // Default to enabled
+    private bool _autoLookAfterMove = true;
 
     protected override void OnInitialized()
     {
@@ -55,7 +55,6 @@ else
     {
         if (firstRender && Host.IsInitialized && _terminal is not null)
         {
-            // Show initial room description
             var result = await Host.ProcessCommandAsync("look");
             _terminal.WriteRoomDescription(result, "");
             _terminal.WriteSystem("Type 'help' for a list of commands.");
@@ -68,57 +67,9 @@ else
     {
         if (_terminal is null) return;
 
-        var result = await Host.ProcessCommandAsync(command);
-        var cssClass = result.Success ? "" : "error";
-
-        // Check if this is a look command
-        if (IsLookCommand(command))
-        {
-            _terminal.WriteRoomDescription(result, cssClass);
-            _terminal.Clear(); // Clear action panel
-        }
-        else if (IsNavigationCommand(command))
-        {
-            _terminal.Clear();
-            _terminal.WriteCommandResult(result, cssClass);
-
-            // Auto-look after navigation if enabled
-            if (_autoLookAfterMove)
-            {
-                var lookResult = await Host.ProcessCommandAsync("look");
-                _terminal.WriteRoomDescription(lookResult, lookResult.Success ? "" : "error");
-            }
-        }
-        else
-        {
-            _terminal.Clear();
-            _terminal.WriteCommandResult(result, cssClass);
-
-            // If command changed room state, refresh room description
-            if (result.RefreshRoomDescription)
-            {
-                var lookResult = await Host.ProcessCommandAsync("look");
-                _terminal.WriteRoomDescription(lookResult, lookResult.Success ? "" : "error");
-            }
-        }
-
+        await _terminal.ExecuteCommand(command);
         RefreshPanels();
         await _terminal.FocusInput();
-    }
-
-    private bool IsLookCommand(string command)
-    {
-        var commandLower = command.Trim().ToLowerInvariant();
-        return commandLower == "look" || commandLower == "l" ||
-               commandLower.StartsWith("look ") || commandLower.StartsWith("l ");
-    }
-
-    private bool IsNavigationCommand(string command)
-    {
-        var commandLower = command.Trim().ToLowerInvariant();
-        return commandLower.StartsWith("go") || commandLower.StartsWith("move") ||
-               commandLower is "north" or "south" or "east" or "west" or "up" or "down" or
-               "n" or "s" or "e" or "w" or "u" or "d";
     }
 
     private void RefreshPanels()

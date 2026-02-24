@@ -31,16 +31,20 @@ Explore procedurally connected dungeons, battle NPCs, collect items, and complet
 proto-0/
 ├── src/
 │   ├── ProtoEngine/      # Core game logic (platform-agnostic)
-│   │   ├── Commands/     # Player commands (look, move, take, etc.)
+│   │   ├── Commands/     # Player commands (look, move, take, etc.) + CommandClassifier
 │   │   ├── Components/   # Data components (Health, Inventory, Position, Equipment, Stats, Exercise, etc.)
 │   │   ├── Systems/      # Game systems (World, Combat, Inventory, ActionLog, StatGrowth, etc.)
 │   │   ├── Data/         # Content data structures
+│   │   ├── Persistence/  # Save/load mapping (SaveData, SaveDataMapper)
 │   │   └── Core/         # ECS framework, events, state management
 │   └── ProtoMud/         # Blazor WebAssembly UI
 │       ├── Components/   # UI components (Terminal, EntityButton, PlayerInfoPanel, EquipmentPanel, ActionLogPanel, MapPanel, TimeWidget, StatsPanel)
 │       ├── Pages/        # Blazor pages (Home, Game)
 │       ├── Services/     # Game session hosting
 │       └── wwwroot/      # Static assets and game content (JSON)
+├── tests/
+│   ├── ProtoEngine.Tests/  # xUnit tests for core game logic (95 tests)
+│   └── ProtoMud.Tests/     # bUnit + xUnit tests for Blazor UI (8 tests)
 └── CLAUDE.md             # Development guide for contributors
 ```
 
