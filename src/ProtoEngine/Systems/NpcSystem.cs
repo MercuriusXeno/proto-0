@@ -35,9 +35,11 @@ public class NpcSystem : IGameSystem
             });
             npc.Add(new NpcComponent
             {
+                Title = npcData.Title,
                 DialogueId = npcData.DialogueId,
                 Behavior = npcData.Behavior,
-                IsHostile = npcData.IsHostile
+                IsHostile = npcData.IsHostile,
+                Disposition = npcData.Disposition
             });
             state.AddEntity(npc);
         }
@@ -68,11 +70,22 @@ public class NpcSystem : IGameSystem
         var playerPos = state.Player.Get<PositionComponent>();
         if (playerPos is null) return null;
 
+        // Special case: "someone" means any NPC we haven't met yet (or just the first one)
+        if (name.Equals("someone", StringComparison.OrdinalIgnoreCase))
+        {
+            return state.Entities.Values.FirstOrDefault(e =>
+                e.Tag == "npc" &&
+                e.Get<PositionComponent>()?.RoomId == playerPos.RoomId &&
+                e.Get<HealthComponent>()?.IsAlive == true);
+        }
+
+        // Try to find by name first, then by title (for NPCs you haven't met yet)
         return state.Entities.Values.FirstOrDefault(e =>
             e.Tag == "npc" &&
             e.Get<PositionComponent>()?.RoomId == playerPos.RoomId &&
             e.Get<HealthComponent>()?.IsAlive == true &&
-            (e.Get<DescriptionComponent>()?.Name.Equals(name, StringComparison.OrdinalIgnoreCase) ?? false));
+            ((e.Get<DescriptionComponent>()?.Name.Equals(name, StringComparison.OrdinalIgnoreCase) ?? false) ||
+             (e.Get<NpcComponent>()?.Title.Equals(name, StringComparison.OrdinalIgnoreCase) ?? false)));
     }
 
     public List<string> Talk(GameState state, Entity npc)

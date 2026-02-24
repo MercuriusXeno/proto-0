@@ -1,0 +1,63 @@
+@using ProtoEngine.Commands
+
+<span class="entity-btn entity-@Type.ToString().ToLower()"
+      @onclick="HandleClick"
+      @onclick:stopPropagation="true">
+    @DisplayName
+    @if (_showMenu)
+    {
+        <div class="entity-menu" @onclick:stopPropagation="true">
+            @foreach (var action in AvailableActions)
+            {
+                <button class="entity-action" @onclick="() => ExecuteAction(action)">
+                    @GetActionLabel(action)
+                </button>
+            }
+        </div>
+    }
+</span>
+
+@code {
+    [Parameter] public EntityReference Entity { get; set; } = null!;
+    [Parameter] public EventCallback<string> OnCommand { get; set; }
+
+    private string DisplayName => Entity.DisplayName;
+    private EntityType Type => Entity.Type;
+    private List<EntityAction> AvailableActions => Entity.AvailableActions;
+    private bool _showMenu = false;
+
+    private void HandleClick() => _showMenu = !_showMenu;
+
+    private async Task ExecuteAction(EntityAction action)
+    {
+        var command = BuildCommand(action);
+        _showMenu = false;
+        await OnCommand.InvokeAsync(command);
+    }
+
+    private string BuildCommand(EntityAction action) => action switch
+    {
+        EntityAction.Take => $"take {Entity.DisplayName}",
+        EntityAction.Examine => $"examine {Entity.DisplayName}",
+        EntityAction.Drop => $"drop {Entity.DisplayName}",
+        EntityAction.Use => $"use {Entity.DisplayName}",
+        EntityAction.Equip => $"equip {Entity.DisplayName}",
+        EntityAction.Talk => $"talk {Entity.DisplayName}",
+        EntityAction.Attack => $"attack {Entity.DisplayName}",
+        EntityAction.Move => Entity.DisplayName, // Just direction
+        _ => ""
+    };
+
+    private string GetActionLabel(EntityAction action) => action switch
+    {
+        EntityAction.Take => "Take",
+        EntityAction.Examine => "Examine",
+        EntityAction.Drop => "Drop",
+        EntityAction.Use => "Use",
+        EntityAction.Equip => "Equip",
+        EntityAction.Talk => "Talk",
+        EntityAction.Attack => "Attack",
+        EntityAction.Move => "Go",
+        _ => action.ToString()
+    };
+}

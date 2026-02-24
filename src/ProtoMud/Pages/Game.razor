@@ -11,13 +11,22 @@
 else
 {
     <div class="game-layout">
-        <div class="sidebar-left">
-            <StatsPanel @ref="_statsPanel" />
+        <div class="sidebar-left-top">
+            <PlayerInfoPanel @ref="_playerInfoPanel" />
+        </div>
+
+        <div class="sidebar-left-bottom">
             <MapPanel @ref="_mapPanel" OnNavigate="HandleAction" />
         </div>
 
         <div class="main-area">
-            <Terminal @ref="_terminal" OnCommandExecuted="RefreshPanels" />
+            <Terminal @ref="_terminal" OnCommandExecuted="RefreshPanels" AutoLookAfterMove="_autoLookAfterMove" />
+            <div class="terminal-controls">
+                <label class="auto-look-toggle">
+                    <input type="checkbox" @bind="_autoLookAfterMove" />
+                    Auto-look after navigation
+                </label>
+            </div>
             <ActionBar OnAction="HandleAction" />
         </div>
 
@@ -29,9 +38,10 @@ else
 
 @code {
     private Terminal? _terminal;
-    private StatsPanel? _statsPanel;
+    private PlayerInfoPanel? _playerInfoPanel;
     private MapPanel? _mapPanel;
     private ActionLogPanel? _actionLogPanel;
+    private bool _autoLookAfterMove = true; // Default to enabled
 
     protected override void OnInitialized()
     {
@@ -45,9 +55,7 @@ else
         {
             // Show initial room description
             var result = await Host.ProcessCommandAsync("look");
-            _terminal.Clear();
-            _terminal.WriteLines(result.Output);
-            _terminal.WriteLines(new[] { "" });
+            _terminal.WriteRoomDescription(result, "");
             _terminal.WriteSystem("Type 'help' for a list of commands.");
             RefreshPanels();
             StateHasChanged();
@@ -59,35 +67,61 @@ else
         if (_terminal is null) return;
 
         var result = await Host.ProcessCommandAsync(command);
+        var cssClass = result.Success ? "" : "error";
 
-        // Clear terminal for room-viewing commands (look, move)
-        var commandLower = command.Trim().ToLowerInvariant();
-        var isRoomCommand = commandLower.StartsWith("look") || commandLower.StartsWith("l ") || commandLower == "l" ||
-                           commandLower.StartsWith("go") || commandLower.StartsWith("move") ||
-                           commandLower is "north" or "south" or "east" or "west" or "up" or "down" or
-                           "n" or "s" or "e" or "w" or "u" or "d";
-
-        if (isRoomCommand)
+        // Check if this is a look command
+        if (IsLookCommand(command))
+        {
+            _terminal.WriteRoomDescription(result, cssClass);
+            _terminal.Clear(); // Clear action panel
+        }
+        else if (IsNavigationCommand(command))
         {
             _terminal.Clear();
-            var cssClass = result.Success ? "" : "error";
-            _terminal.WriteLines(result.Output, cssClass);
+            _terminal.WriteCommandResult(result, cssClass);
+
+            // Auto-look after navigation if enabled
+            if (_autoLookAfterMove)
+            {
+                var lookResult = await Host.ProcessCommandAsync("look");
+                _terminal.WriteRoomDescription(lookResult, lookResult.Success ? "" : "error");
+            }
         }
         else
         {
-            _terminal.WriteLines(new[] { $"> {command}" }, "command-echo");
-            var cssClass = result.Success ? "" : "error";
-            _terminal.WriteLines(result.Output, cssClass);
-            _terminal.WriteLines(new[] { "" });
+            _terminal.Clear();
+            _terminal.WriteCommandResult(result, cssClass);
+
+            // If command changed room state, refresh room description
+            if (result.RefreshRoomDescription)
+            {
+                var lookResult = await Host.ProcessCommandAsync("look");
+                _terminal.WriteRoomDescription(lookResult, lookResult.Success ? "" : "error");
+            }
         }
 
         RefreshPanels();
         await _terminal.FocusInput();
     }
 
+    private bool IsLookCommand(string command)
+    {
+        var commandLower = command.Trim().ToLowerInvariant();
+        return commandLower == "look" || commandLower == "l" ||
+               commandLower.StartsWith("look ") || commandLower.StartsWith("l ");
+    }
+
+    private bool IsNavigationCommand(string command)
+    {
+        var commandLower = command.Trim().ToLowerInvariant();
+        return commandLower.StartsWith("go") || commandLower.StartsWith("move") ||
+               commandLower is "north" or "south" or "east" or "west" or "up" or "down" or
+               "n" or "s" or "e" or "w" or "u" or "d";
+    }
+
     private void RefreshPanels()
     {
-        _statsPanel?.Refresh();
+        _playerInfoPanel?.Refresh();
         _mapPanel?.Refresh();
         _actionLogPanel?.Refresh();
     }

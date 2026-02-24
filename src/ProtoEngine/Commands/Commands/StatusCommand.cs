@@ -29,9 +29,18 @@ public class StatusCommand : ICommand
         if (equipment is not null)
         {
             lines.Add("");
-            lines.Add("Equipment:");
-            lines.Add($"  Weapon:    {equipment.WeaponId ?? "(none)"}");
-            lines.Add($"  Armor:     {equipment.ArmorId ?? "(none)"}");
+            lines.Add("Wielding:");
+            var leftHand = equipment.GetSlotItems(EquipmentSlot.WieldLeft).FirstOrDefault();
+            var rightHand = equipment.GetSlotItems(EquipmentSlot.WieldRight).FirstOrDefault();
+            lines.Add($"  Left Hand:  {leftHand?.ItemName ?? "(unarmed)"}");
+            lines.Add($"  Right Hand: {rightHand?.ItemName ?? "(unarmed)"}");
+
+            lines.Add("");
+            lines.Add("Wearing:");
+            var torso = equipment.GetSlotItems(EquipmentSlot.UpperTorso).FirstOrDefault();
+            var hands = equipment.GetSlotItems(EquipmentSlot.Hand).FirstOrDefault();
+            lines.Add($"  Armor:     {torso?.ItemName ?? "(none)"}");
+            lines.Add($"  Gloves:    {hands?.ItemName ?? "(none)"}");
         }
 
         if (effects?.Effects.Count > 0)

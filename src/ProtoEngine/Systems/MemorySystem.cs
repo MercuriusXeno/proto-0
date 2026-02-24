@@ -32,6 +32,23 @@ public class MemorySystem : IGameSystem
         if (memory is null) return;
 
         memory.VisitedRoomIds.Add(roomId);
+
+        // Increment visit count when entering a different room
+        if (memory.CurrentRoomId != roomId)
+        {
+            memory.CurrentRoomId = roomId;
+            if (!memory.RoomVisitCounts.ContainsKey(roomId))
+                memory.RoomVisitCounts[roomId] = 0;
+            memory.RoomVisitCounts[roomId]++;
+        }
+    }
+
+    public int GetCurrentVisitNumber(GameState state, string roomId)
+    {
+        var memory = state.Player.Get<RoomMemoryComponent>();
+        if (memory is null || !memory.RoomVisitCounts.ContainsKey(roomId))
+            return 0;
+        return memory.RoomVisitCounts[roomId];
     }
 
     public void RecordItemFound(GameState state, string roomId, string itemId, string itemName)
@@ -45,12 +62,14 @@ public class MemorySystem : IGameSystem
         // Only record if not already recorded
         if (!memory.RoomMemories[roomId].Any(m => m.Type == RoomMemoryType.ItemFound && m.EntityId == itemId))
         {
+            var visitNumber = GetCurrentVisitNumber(state, roomId);
             memory.RoomMemories[roomId].Add(new RoomMemory
             {
                 Type = RoomMemoryType.ItemFound,
                 EntityId = itemId,
                 EntityName = itemName,
-                GameTick = state.Clock.Tick
+                GameTick = state.Clock.Tick,
+                RoomVisitNumber = visitNumber
             });
         }
     }
@@ -63,12 +82,14 @@ public class MemorySystem : IGameSystem
         if (!memory.RoomMemories.ContainsKey(roomId))
             memory.RoomMemories[roomId] = new List<RoomMemory>();
 
+        var visitNumber = GetCurrentVisitNumber(state, roomId);
         memory.RoomMemories[roomId].Add(new RoomMemory
         {
             Type = RoomMemoryType.ItemTaken,
             EntityId = itemId,
             EntityName = itemName,
-            GameTick = state.Clock.Tick
+            GameTick = state.Clock.Tick,
+            RoomVisitNumber = visitNumber
         });
     }
 
@@ -84,12 +105,14 @@ public class MemorySystem : IGameSystem
         if (!memory.RoomMemories[roomId].Any(m =>
             (m.Type == RoomMemoryType.NpcMet || m.Type == RoomMemoryType.NpcKilled) && m.EntityId == npcId))
         {
+            var visitNumber = GetCurrentVisitNumber(state, roomId);
             memory.RoomMemories[roomId].Add(new RoomMemory
             {
                 Type = RoomMemoryType.NpcMet,
                 EntityId = npcId,
                 EntityName = npcName,
-                GameTick = state.Clock.Tick
+                GameTick = state.Clock.Tick,
+                RoomVisitNumber = visitNumber
             });
         }
     }

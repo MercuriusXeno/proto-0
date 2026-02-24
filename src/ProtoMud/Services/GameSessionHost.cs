@@ -103,8 +103,11 @@ public class GameSessionHost
         registry.Register(new TakeCommand(Inventory, World, Memory, ActionLog));
         registry.Register(new DropCommand(Inventory));
         registry.Register(new UseCommand(Inventory));
+        registry.Register(new WearCommand(Inventory));
+        registry.Register(new WieldCommand(Inventory));
+        registry.Register(new UnwieldCommand());
         registry.Register(new AttackCommand(Combat, Player, World, Memory, ActionLog));
-        registry.Register(new TalkCommand(Npc));
+        registry.Register(new TalkCommand(Npc, World, Memory));
         registry.Register(new StatusCommand());
         registry.Register(new CraftCommand(Crafting));
         registry.Register(new QuestCommand(Quest));
@@ -154,8 +157,8 @@ public class GameSessionHost
             PlayerIntelligence = stats?.Intelligence ?? 10,
             PlayerGold = stats?.Gold ?? 0,
             InventoryItemIds = inv?.ItemIds.ToList() ?? new(),
-            WeaponId = equip?.WeaponId,
-            ArmorId = equip?.ArmorId,
+            WeaponId = equip?.GetSlotItems(EquipmentSlot.WieldRight).FirstOrDefault()?.ItemId, // Save right hand wield for backwards compat
+            ArmorId = equip?.GetSlotItems(EquipmentSlot.UpperTorso).FirstOrDefault()?.ItemId,
             SavedAt = DateTime.UtcNow
         };
     }
@@ -187,7 +190,24 @@ public class GameSessionHost
         if (inv is not null) inv.ItemIds = save.InventoryItemIds.ToList();
 
         var equip = state.Player.Get<EquipmentComponent>();
-        if (equip is not null) { equip.WeaponId = save.WeaponId; equip.ArmorId = save.ArmorId; }
+        if (equip is not null)
+        {
+            // Restore weapon to WieldRight slot
+            if (save.WeaponId is not null)
+            {
+                var weaponData = _content?.Items.FirstOrDefault(i => i.Id == save.WeaponId);
+                if (weaponData is not null)
+                    equip.EquipItem(EquipmentSlot.WieldRight, save.WeaponId, weaponData.Name);
+            }
+
+            // Restore armor to UpperTorso slot
+            if (save.ArmorId is not null)
+            {
+                var armorData = _content?.Items.FirstOrDefault(i => i.Id == save.ArmorId);
+                if (armorData is not null)
+                    equip.EquipItem(EquipmentSlot.UpperTorso, save.ArmorId, armorData.Name);
+            }
+        }
     }
 
     private async Task<T?> LoadJson<T>(string path) where T : class

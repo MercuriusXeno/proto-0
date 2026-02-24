@@ -9,6 +9,8 @@ public class RoomMemoryComponent : IComponent
 {
     public HashSet<string> VisitedRoomIds { get; set; } = new();
     public Dictionary<string, List<RoomMemory>> RoomMemories { get; set; } = new();
+    public Dictionary<string, int> RoomVisitCounts { get; set; } = new(); // How many times entered each room
+    public string CurrentRoomId { get; set; } = string.Empty; // Track current room for visit counting
 }
 
 public class RoomMemory
@@ -18,6 +20,7 @@ public class RoomMemory
     public string EntityName { get; set; } = string.Empty;
     public int GameTick { get; set; }
     public string? AdditionalInfo { get; set; } // e.g., "murdered", "taken"
+    public int RoomVisitNumber { get; set; } // Which visit to the room this memory was created
 }
 
 public enum RoomMemoryType

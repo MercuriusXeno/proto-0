@@ -29,6 +29,7 @@ public class UseCommand : ICommand
         if (item is null)
             return CommandResult.Fail($"You don't have a '{itemName}'.");
 
+        // Use command is only for consumables
         if (item.Type == "consumable" && item.HealAmount > 0)
         {
             var health = context.Player.Get<HealthComponent>();
@@ -43,29 +44,12 @@ public class UseCommand : ICommand
             }
         }
 
+        // For equipment and weapons, suggest the appropriate command
         if (item.Type == "weapon")
-        {
-            var equip = context.Player.Get<EquipmentComponent>();
-            var combat = context.Player.Get<CombatComponent>();
-            if (equip is not null && combat is not null)
-            {
-                equip.WeaponId = item.Id;
-                combat.AttackPower = 5 + item.AttackBonus;
-                return CommandResult.Ok($"You equip the {item.Name}. Attack power: {combat.AttackPower}");
-            }
-        }
+            return CommandResult.Fail($"You can't use the {item.Name}. Try 'wield {item.Name}' instead.");
 
         if (item.Type == "armor")
-        {
-            var equip = context.Player.Get<EquipmentComponent>();
-            var combat = context.Player.Get<CombatComponent>();
-            if (equip is not null && combat is not null)
-            {
-                equip.ArmorId = item.Id;
-                combat.Defense = 2 + item.DefenseBonus;
-                return CommandResult.Ok($"You equip the {item.Name}. Defense: {combat.Defense}");
-            }
-        }
+            return CommandResult.Fail($"You can't use the {item.Name}. Try 'wear {item.Name}' instead.");
 
         return CommandResult.Fail($"You can't figure out how to use the {item.Name}.");
     }

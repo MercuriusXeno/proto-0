@@ -2,10 +2,34 @@
 @using ProtoEngine.Commands
 
 <div class="terminal">
-    <div class="terminal-output" @ref="_outputRef">
-        @foreach (var line in _outputLines)
+    <div class="room-description-panel" @ref="_roomDescRef">
+        @foreach (var line in _roomDescLines)
         {
-            <div class="terminal-line @(line.CssClass)">@line.Text</div>
+            <div class="terminal-line @(line.CssClass)">
+                @if (line.Entities.Count > 0)
+                {
+                    @RenderRichLine(line)
+                }
+                else
+                {
+                    @line.Text
+                }
+            </div>
+        }
+    </div>
+    <div class="action-output-panel" @ref="_actionOutputRef">
+        @foreach (var line in _actionOutputLines)
+        {
+            <div class="terminal-line @(line.CssClass)">
+                @if (line.Entities.Count > 0)
+                {
+                    @RenderRichLine(line)
+                }
+                else
+                {
+                    @line.Text
+                }
+            </div>
         }
     </div>
     <div class="terminal-input-row">
@@ -24,11 +48,14 @@
 
 @code {
     [Parameter] public EventCallback OnCommandExecuted { get; set; }
+    [Parameter] public bool AutoLookAfterMove { get; set; }
 
-    private ElementReference _outputRef;
+    private ElementReference _roomDescRef;
+    private ElementReference _actionOutputRef;
     private ElementReference _inputRef;
     private string _currentInput = "";
-    private readonly List<TerminalLine> _outputLines = new();
+    private readonly List<TerminalLine> _roomDescLines = new();
+    private readonly List<TerminalLine> _actionOutputLines = new();
     private readonly List<string> _commandHistory = new();
     private int _historyIndex = -1;
 
@@ -43,27 +70,54 @@
     public void WriteLines(IEnumerable<string> lines, string cssClass = "")
     {
         foreach (var line in lines)
-            _outputLines.Add(new TerminalLine(line, cssClass));
+            _actionOutputLines.Add(new TerminalLine(line, cssClass, new()));
         StateHasChanged();
+    }
+
+    public void WriteCommandResult(CommandResult result, string cssClass = "")
+    {
+        WriteCommandResultToPanel(result, cssClass, _actionOutputLines);
+        StateHasChanged();
+    }
+
+    public void WriteRoomDescription(CommandResult result, string cssClass = "")
+    {
+        _roomDescLines.Clear();
+        WriteCommandResultToPanel(result, cssClass, _roomDescLines);
+        StateHasChanged();
+    }
+
+    private void WriteCommandResultToPanel(CommandResult result, string cssClass, List<TerminalLine> targetList)
+    {
+        if (result.RichOutput.Count > 0)
+        {
+            foreach (var line in result.RichOutput)
+                targetList.Add(new TerminalLine(line.Text, cssClass, line.Entities));
+        }
+        else
+        {
+            foreach (var line in result.Output)
+                targetList.Add(new TerminalLine(line, cssClass, new()));
+        }
     }
 
     public void WriteSystem(string text)
     {
-        _outputLines.Add(new TerminalLine(text, "system"));
+        _actionOutputLines.Add(new TerminalLine(text, "system", new()));
         StateHasChanged();
     }
 
     public void Clear()
     {
-        _outputLines.Clear();
+        _actionOutputLines.Clear();
         StateHasChanged();
     }
 
     public void SetContent(IEnumerable<string> lines, string cssClass = "")
     {
-        _outputLines.Clear();
+        _actionOutputLines.Clear();
         foreach (var line in lines)
-            _outputLines.Add(new TerminalLine(line, cssClass));
+            _actionOutputLines.Add(new TerminalLine(line, cssClass, new()));
         StateHasChanged();
     }
 
@@ -79,27 +133,39 @@
 
             var result = await Host.ProcessCommandAsync(input);
 
-            // Clear terminal for room-viewing commands
-            var commandLower = input.ToLowerInvariant();
-            var isRoomCommand = commandLower.StartsWith("look") || commandLower.StartsWith("l ") || commandLower == "l" ||
-                               commandLower.StartsWith("go") || commandLower.StartsWith("move") ||
-                               commandLower is "north" or "south" or "east" or "west" or "up" or "down" or
-                               "n" or "s" or "e" or "w" or "u" or "d";
+            var cssClass = result.Success ? "" : "error";
 
-            if (isRoomCommand)
+            // Check if this is a look command - if so, update room description panel
+            if (IsLookCommand(input))
             {
-                _outputLines.Clear();
-                var cssClass = result.Success ? "" : "error";
-                foreach (var line in result.Output)
-                    _outputLines.Add(new TerminalLine(line, cssClass));
+                WriteRoomDescription(result, cssClass);
+                _actionOutputLines.Clear(); // Clear action panel
+            }
+            else if (IsNavigationCommand(input))
+            {
+                // Navigation commands - clear action panel and show movement result
+                _actionOutputLines.Clear();
+                WriteCommandResultToPanel(result, cssClass, _actionOutputLines);
+
+                // Auto-look after navigation if enabled
+                if (AutoLookAfterMove)
+                {
+                    var lookResult = await Host.ProcessCommandAsync("look");
+                    WriteRoomDescription(lookResult, lookResult.Success ? "" : "error");
+                }
             }
             else
             {
-                _outputLines.Add(new TerminalLine($"> {input}", "command-echo"));
-                var cssClass = result.Success ? "" : "error";
-                foreach (var line in result.Output)
-                    _outputLines.Add(new TerminalLine(line, cssClass));
-                _outputLines.Add(new TerminalLine("", ""));
+                // Other commands - clear action panel and show result
+                _actionOutputLines.Clear();
+                WriteCommandResultToPanel(result, cssClass, _actionOutputLines);
+
+                // If command changed room state, refresh room description
+                if (result.RefreshRoomDescription)
+                {
+                    var lookResult = await Host.ProcessCommandAsync("look");
+                    WriteRoomDescription(lookResult, lookResult.Success ? "" : "error");
+                }
             }
 
             await OnCommandExecuted.InvokeAsync();
@@ -145,5 +211,96 @@
         await _inputRef.FocusAsync();
     }
 
-    private record TerminalLine(string Text, string CssClass);
+    private async Task HandleEntityCommand(string command)
+    {
+        if (Host == null) return;
+
+        var result = await Host.ProcessCommandAsync(command);
+
+        var cssClass = result.Success ? "" : "error";
+
+        // Check if this is a look command - if so, update room description panel
+        if (IsLookCommand(command))
+        {
+            WriteRoomDescription(result, cssClass);
+            _actionOutputLines.Clear(); // Clear action panel
+        }
+        else if (IsNavigationCommand(command))
+        {
+            // Navigation commands - clear action panel and show movement result
+            _actionOutputLines.Clear();
+            WriteCommandResultToPanel(result, cssClass, _actionOutputLines);
+
+            // Auto-look after navigation if enabled
+            if (AutoLookAfterMove)
+            {
+                var lookResult = await Host.ProcessCommandAsync("look");
+                WriteRoomDescription(lookResult, lookResult.Success ? "" : "error");
+            }
+        }
+        else
+        {
+            // Other commands - clear action panel and show result
+            _actionOutputLines.Clear();
+            WriteCommandResultToPanel(result, cssClass, _actionOutputLines);
+
+            // If command changed room state, refresh room description
+            if (result.RefreshRoomDescription)
+            {
+                var lookResult = await Host.ProcessCommandAsync("look");
+                WriteRoomDescription(lookResult, lookResult.Success ? "" : "error");
+            }
+        }
+
+        await OnCommandExecuted.InvokeAsync();
+        StateHasChanged();
+
+        await ScrollToBottom();
+    }
+
+    private bool IsLookCommand(string command)
+    {
+        var commandLower = command.Trim().ToLowerInvariant();
+        return commandLower == "look" || commandLower == "l" ||
+               commandLower.StartsWith("look ") || commandLower.StartsWith("l ");
+    }
+
+    private bool IsNavigationCommand(string command)
+    {
+        var commandLower = command.Trim().ToLowerInvariant();
+        return commandLower.StartsWith("go") || commandLower.StartsWith("move") ||
+               commandLower is "north" or "south" or "east" or "west" or "up" or "down" or
+               "n" or "s" or "e" or "w" or "u" or "d";
+    }
+
+    private RenderFragment RenderRichLine(TerminalLine line) => builder =>
+    {
+        var text = line.Text;
+        var offset = 0;
+
+        foreach (var entity in line.Entities)
+        {
+            var idx = text.IndexOf(entity.DisplayName, offset, StringComparison.OrdinalIgnoreCase);
+            if (idx >= 0)
+            {
+                // Text before entity
+                if (idx > offset)
+                    builder.AddContent(0, text.Substring(offset, idx - offset));
+
+                // Entity button
+                builder.OpenComponent<EntityButton>(1);
+                builder.AddAttribute(2, "Entity", entity);
+                builder.AddAttribute(3, "OnCommand", EventCallback.Factory.Create<string>(this, HandleEntityCommand));
+                builder.CloseComponent();
+
+                offset = idx + entity.DisplayName.Length;
+            }
+        }
+
+        // Remaining text
+        if (offset < text.Length)
+            builder.AddContent(4, text.Substring(offset));
+    };
+
+    private record TerminalLine(string Text, string CssClass, List<EntityReference> Entities);
 }

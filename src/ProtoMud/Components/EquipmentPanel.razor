@@ -1,0 +1,87 @@
+@inject GameSessionHost Host
+@using ProtoEngine.Components
+
+<div class="equipment-panel panel">
+    <h3>Equipment</h3>
+    <div class="equipment-slots">
+        @foreach (var region in GetEquipmentRegions())
+        {
+            <div class="equipment-region">
+                <h4 class="region-name">@region.Name</h4>
+                @foreach (var slot in region.Slots)
+                {
+                    <div class="equipment-slot">
+                        <span class="slot-name">@GetSlotDisplayName(slot):</span>
+                        <span class="slot-items">@GetSlotContents(slot)</span>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private record EquipmentRegion(string Name, EquipmentSlot[] Slots);
+
+    public void Refresh()
+    {
+        StateHasChanged();
+    }
+
+    private List<EquipmentRegion> GetEquipmentRegions()
+    {
+        return new List<EquipmentRegion>
+        {
+            new("Wielding", new[] { EquipmentSlot.WieldLeft, EquipmentSlot.WieldRight }),
+            new("Head", new[] { EquipmentSlot.Head, EquipmentSlot.Face, EquipmentSlot.Neck }),
+            new("Torso", new[] { EquipmentSlot.UpperTorso, EquipmentSlot.LowerTorso, EquipmentSlot.Waist }),
+            new("Arms", new[] { EquipmentSlot.Shoulder, EquipmentSlot.UpperArm, EquipmentSlot.Elbow,
+                               EquipmentSlot.Forearm, EquipmentSlot.Wrist, EquipmentSlot.Hand }),
+            new("Legs", new[] { EquipmentSlot.Thigh, EquipmentSlot.Knee, EquipmentSlot.Calf,
+                               EquipmentSlot.Ankle, EquipmentSlot.Foot }),
+            new("Relics", new[] { EquipmentSlot.Relic1, EquipmentSlot.Relic2, EquipmentSlot.Relic3,
+                                 EquipmentSlot.Relic4, EquipmentSlot.Relic5, EquipmentSlot.Relic6 })
+        };
+    }
+
+    private string GetSlotDisplayName(EquipmentSlot slot)
+    {
+        return slot switch
+        {
+            EquipmentSlot.WieldLeft => "Left Hand",
+            EquipmentSlot.WieldRight => "Right Hand",
+            EquipmentSlot.UpperTorso => "Upper Torso",
+            EquipmentSlot.LowerTorso => "Lower Torso",
+            EquipmentSlot.UpperArm => "Upper Arm",
+            EquipmentSlot.Relic1 => "Relic I",
+            EquipmentSlot.Relic2 => "Relic II",
+            EquipmentSlot.Relic3 => "Relic III",
+            EquipmentSlot.Relic4 => "Relic IV",
+            EquipmentSlot.Relic5 => "Relic V",
+            EquipmentSlot.Relic6 => "Relic VI",
+            _ => slot.ToString()
+        };
+    }
+
+    private string GetSlotContents(EquipmentSlot slot)
+    {
+        if (Host.Session?.State?.Player is null)
+            return "—";
+
+        var equipment = Host.Session.State.Player.Get<EquipmentComponent>();
+        if (equipment is null || equipment.IsSlotEmpty(slot))
+        {
+            // Show "(unarmed)" for empty wielding slots
+            if (slot is EquipmentSlot.WieldLeft or EquipmentSlot.WieldRight)
+                return "(unarmed)";
+            return "—";
+        }
+
+        var items = equipment.GetSlotItems(slot);
+        if (items.Count == 1)
+            return items[0].ItemName;
+
+        // Multiple items (layers)
+        return string.Join(" / ", items.Select(i => i.ItemName));
+    }
+}

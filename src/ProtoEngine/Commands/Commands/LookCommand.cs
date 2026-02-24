@@ -28,14 +28,24 @@ public class LookCommand : ICommand
         if (room is null)
             return CommandResult.Fail("You are nowhere.");
 
+        // Check if we've been here before (currentVisit is pre-increment, so >= 1 means we've been here)
+        var currentVisit = _memory.GetCurrentVisitNumber(context.State, room.Id);
+        var isRevisit = currentVisit >= 1;
+
         // Mark room as visited
         _memory.AddRoomVisit(context.State, room.Id);
 
-        var lines = new List<string>();
-        lines.Add($"== {room.Name} ==");
-        lines.Add(_narrative.GetTimeDescription(context.State.Clock));
-        lines.Add("");
-        lines.Add(room.Description);
+        var lines = new List<OutputLine>();
+        lines.Add(OutputLine.Plain($"== {room.Name} =="));
+        lines.Add(OutputLine.Plain(_narrative.GetTimeDescription(context.State.Clock)));
+
+        if (isRevisit)
+        {
+            lines.Add(OutputLine.Plain("You've been here before."));
+        }
+
+        lines.Add(OutputLine.Plain(""));
+        lines.Add(OutputLine.Plain(room.Description));
 
         // Get room memories
         var memories = _memory.GetRoomMemories(context.State, room.Id);
@@ -44,23 +54,45 @@ public class LookCommand : ICommand
         var items = _inventory.GetItemsInRoom(context.State, room.Id);
         if (items.Count > 0)
         {
-            lines.Add("");
+            lines.Add(OutputLine.Plain(""));
+
             foreach (var item in items)
             {
-                // Check if item was found before
-                var itemMemory = memories.FirstOrDefault(m =>
-                    m.Type == RoomMemoryType.ItemFound && m.EntityId == item.Id);
+                var itemRef = new EntityReference(
+                    item.Id,
+                    item.Name,
+                    EntityType.Item,
+                    new() { EntityAction.Take, EntityAction.Examine }
+                );
 
-                if (itemMemory != null)
+                // Check if we have a memory of TAKING this item (actually picking it up)
+                var itemTakenMemory = memories.FirstOrDefault(m =>
+                    m.Type == RoomMemoryType.ItemTaken && m.EntityId == item.Id);
+
+                if (itemTakenMemory != null && currentVisit > itemTakenMemory.RoomVisitNumber)
                 {
-                    var timeStr = FormatGameTime(context.State.Clock, itemMemory.GameTick);
-                    lines.Add($"You found {item.Name} here {timeStr}");
+                    // We've taken this item before and are revisiting
+                    var timeStr = FormatGameTime(context.State.Clock, itemTakenMemory.GameTick);
+                    var article = GetArticle(item.Name);
+
+                    // Check if player currently has this item in inventory
+                    var playerInventory = _inventory.GetInventoryItems(context.State);
+                    var hasItem = playerInventory.Any(i => i.Id == item.Id);
+
+                    if (hasItem)
+                    {
+                        lines.Add(OutputLine.WithEntities($"You picked up {article}{item.Name} here {timeStr}, which you still have", itemRef));
+                    }
+                    else
+                    {
+                        lines.Add(OutputLine.WithEntities($"You picked up {article}{item.Name} here {timeStr}", itemRef));
+                    }
                 }
                 else
                 {
-                    lines.Add($"You see {item.Name} here");
-                    // Record seeing it for the first time
-                    _memory.RecordItemFound(context.State, room.Id, item.Id, item.Name);
+                    // Haven't taken this item yet, or still on same visit
+                    var article = GetArticle(item.Name);
+                    lines.Add(OutputLine.WithEntities($"You see {article}{item.Name} here", itemRef));
                 }
             }
         }
@@ -72,7 +104,7 @@ public class LookCommand : ICommand
 
         if (aliveNpcs.Count > 0 || deadNpcs.Count > 0)
         {
-            lines.Add("");
+            lines.Add(OutputLine.Plain(""));
         }
 
         foreach (var npc in aliveNpcs)
@@ -80,17 +112,42 @@ public class LookCommand : ICommand
             var desc = npc.Get<DescriptionComponent>();
             if (desc is not null)
             {
+                // Check if we've met this NPC (talked to them)
                 var npcMemory = memories.FirstOrDefault(m =>
                     m.Type == RoomMemoryType.NpcMet && m.EntityId == npc.Id);
 
                 if (npcMemory != null)
                 {
-                    lines.Add($"You see {desc.Name} here");
+                    // We know their name - show "Name the Title"
+                    var npcComp = npc.Get<NpcComponent>();
+                    var displayText = desc.Name;
+
+                    // Add title if they have one and aren't a creature
+                    if (!string.IsNullOrEmpty(npcComp?.Title))
+                    {
+                        displayText = $"{desc.Name} the {npcComp.Title}";
+                    }
+
+                    var npcRef = new EntityReference(
+                        npc.Id,
+                        desc.Name,
+                        EntityType.Npc,
+                        new() { EntityAction.Talk, EntityAction.Attack, EntityAction.Examine }
+                    );
+
+                    lines.Add(OutputLine.WithEntities($"You see {displayText} here", npcRef));
                 }
                 else
                 {
-                    lines.Add($"You see {desc.Name} here");
-                    _memory.RecordNpcMet(context.State, room.Id, npc.Id, desc.Name);
+                    // Haven't talked to them yet - just show "someone"
+                    var npcRef = new EntityReference(
+                        npc.Id,
+                        "someone",
+                        EntityType.Npc,
+                        new() { EntityAction.Talk, EntityAction.Attack, EntityAction.Examine }
+                    );
+
+                    lines.Add(OutputLine.WithEntities($"You see someone here", npcRef));
                 }
             }
         }
@@ -100,17 +157,51 @@ public class LookCommand : ICommand
             var desc = npc.Get<DescriptionComponent>();
             if (desc is not null)
             {
-                var killMemory = memories.FirstOrDefault(m =>
-                    m.Type == RoomMemoryType.NpcKilled && m.EntityId == npc.Id);
+                // Check if we knew them when they were alive
+                var npcMemory = memories.FirstOrDefault(m =>
+                    m.Type == RoomMemoryType.NpcMet && m.EntityId == npc.Id);
 
-                if (killMemory != null)
+                var npcComp = npc.Get<NpcComponent>();
+                string displayText;
+                string npcRefName;
+
+                if (npcMemory != null)
                 {
-                    var timeStr = FormatGameTime(context.State.Clock, killMemory.GameTick);
-                    lines.Add($"You see the corpse of {desc.Name} you slew here {timeStr}");
+                    // We knew their name - show "Name the Title"
+                    npcRefName = desc.Name;
+                    displayText = desc.Name;
+
+                    // Add title if they have one and aren't a creature
+                    if (!string.IsNullOrEmpty(npcComp?.Title))
+                    {
+                        displayText = $"{desc.Name} the {npcComp.Title}";
+                    }
                 }
                 else
                 {
-                    lines.Add($"You see the corpse of {desc.Name} here");
+                    // We didn't know their name - just show "someone"
+                    npcRefName = "someone";
+                    displayText = "someone";
+                }
+
+                var npcRef = new EntityReference(
+                    npc.Id,
+                    npcRefName,
+                    EntityType.Npc,
+                    new() { EntityAction.Examine }
+                );
+
+                var killMemory = memories.FirstOrDefault(m =>
+                    m.Type == RoomMemoryType.NpcKilled && m.EntityId == npc.Id);
+
+                if (killMemory != null && currentVisit > killMemory.RoomVisitNumber)
+                {
+                    var timeStr = FormatGameTime(context.State.Clock, killMemory.GameTick);
+                    lines.Add(OutputLine.WithEntities($"You see the corpse of {displayText} you slew here {timeStr}", npcRef));
+                }
+                else
+                {
+                    lines.Add(OutputLine.WithEntities($"You see the corpse of {displayText} here", npcRef));
                 }
             }
         }
@@ -118,25 +209,38 @@ public class LookCommand : ICommand
         // Exits (with explored/unexplored distinction)
         if (room.Exits.Count > 0)
         {
-            lines.Add("");
-            var explored = new List<string>();
-            var unexplored = new List<string>();
+            lines.Add(OutputLine.Plain(""));
+            var exploredExits = new List<EntityReference>();
+            var unexploredExits = new List<EntityReference>();
 
             foreach (var exit in room.Exits)
             {
+                var exitRef = new EntityReference(
+                    exit.Key,  // Direction as ID
+                    exit.Key,
+                    EntityType.Exit,
+                    new() { EntityAction.Move }
+                );
+
                 if (_memory.HasExploredExit(context.State, room.Id, exit.Key))
-                    explored.Add(exit.Key);
+                    exploredExits.Add(exitRef);
                 else
-                    unexplored.Add(exit.Key);
+                    unexploredExits.Add(exitRef);
             }
 
-            if (explored.Count > 0)
-                lines.Add($"Explored exits: {string.Join(", ", explored)}");
-            if (unexplored.Count > 0)
-                lines.Add($"Unexplored exits: {string.Join(", ", unexplored)}");
+            if (exploredExits.Count > 0)
+            {
+                var exploredText = $"Explored exits: {string.Join(", ", exploredExits.Select(e => e.DisplayName))}";
+                lines.Add(OutputLine.WithEntities(exploredText, exploredExits.ToArray()));
+            }
+            if (unexploredExits.Count > 0)
+            {
+                var unexploredText = $"Unexplored exits: {string.Join(", ", unexploredExits.Select(e => e.DisplayName))}";
+                lines.Add(OutputLine.WithEntities(unexploredText, unexploredExits.ToArray()));
+            }
         }
 
-        return CommandResult.Ok(lines.ToArray());
+        return CommandResult.OkRich(lines.ToArray());
     }
 
     private string FormatGameTime(Core.GameClock clock, int tick)
@@ -153,5 +257,13 @@ public class LookCommand : ICommand
             _ => "night"
         };
         return $"on day {day} at {timeOfDay}";
+    }
+
+    private string GetArticle(string word)
+    {
+        if (string.IsNullOrEmpty(word)) return "";
+        var first = char.ToLower(word[0]);
+        var vowels = new[] { 'a', 'e', 'i', 'o', 'u' };
+        return vowels.Contains(first) ? "an " : "a ";
     }
 }

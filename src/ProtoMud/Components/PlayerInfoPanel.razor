@@ -1,0 +1,44 @@
+@inject GameSessionHost Host
+
+<div class="player-info-panel panel">
+    <div class="tab-header">
+        <button class="tab-button @(_activeTab == "equipment" ? "active" : "")"
+                @onclick='() => SetActiveTab("equipment")'>
+            Equipment
+        </button>
+        <button class="tab-button @(_activeTab == "stats" ? "active" : "")"
+                @onclick='() => SetActiveTab("stats")'>
+            Stats
+        </button>
+    </div>
+
+    <div class="tab-content">
+        @if (_activeTab == "equipment")
+        {
+            <EquipmentPanel @ref="_equipmentPanel" />
+        }
+        else if (_activeTab == "stats")
+        {
+            <StatsPanel @ref="_statsPanel" />
+        }
+    </div>
+</div>
+
+@code {
+    private string _activeTab = "equipment";
+    private EquipmentPanel? _equipmentPanel;
+    private StatsPanel? _statsPanel;
+
+    private void SetActiveTab(string tab)
+    {
+        _activeTab = tab;
+        StateHasChanged();
+    }
+
+    public void Refresh()
+    {
+        _equipmentPanel?.Refresh();
+        _statsPanel?.Refresh();
+        StateHasChanged();
+    }
+}

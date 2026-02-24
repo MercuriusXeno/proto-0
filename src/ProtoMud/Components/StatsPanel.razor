@@ -2,7 +2,7 @@
 @using ProtoEngine.Components
 
 <div class="stats-panel panel">
-    <h3>Character</h3>
+    <h3>Attributes</h3>
     @if (_health is not null && _stats is not null)
     {
         <div class="stat-row">
@@ -21,20 +21,63 @@
             <span class="stat-value">@_stats.Experience/@_stats.ExperienceToNextLevel</span>
         </div>
         <div class="stat-row">
-            <span class="stat-label">STR</span>
+            <span class="stat-label">Gold</span>
+            <span class="stat-value">@_stats.Gold</span>
+        </div>
+
+        <div class="stats-divider"></div>
+
+        <div class="stat-row">
+            <span class="stat-label">Strength</span>
             <span class="stat-value">@_stats.Strength</span>
         </div>
         <div class="stat-row">
-            <span class="stat-label">DEX</span>
+            <span class="stat-label">Agility</span>
+            <span class="stat-value">@_stats.Agility</span>
+        </div>
+        <div class="stat-row">
+            <span class="stat-label">Dexterity</span>
             <span class="stat-value">@_stats.Dexterity</span>
         </div>
         <div class="stat-row">
-            <span class="stat-label">INT</span>
+            <span class="stat-label">Perception</span>
+            <span class="stat-value">@_stats.Perception</span>
+        </div>
+        <div class="stat-row">
+            <span class="stat-label">Intelligence</span>
             <span class="stat-value">@_stats.Intelligence</span>
         </div>
         <div class="stat-row">
-            <span class="stat-label">Gold</span>
-            <span class="stat-value">@_stats.Gold</span>
+            <span class="stat-label">Willpower</span>
+            <span class="stat-value">@_stats.Willpower</span>
+        </div>
+        <div class="stat-row">
+            <span class="stat-label">Vitality</span>
+            <span class="stat-value">@_stats.Vitality</span>
+        </div>
+        <div class="stat-row">
+            <span class="stat-label">Charisma</span>
+            <span class="stat-value">@_stats.Charisma</span>
+        </div>
+        <div class="stat-row">
+            <span class="stat-label">Luck</span>
+            <span class="stat-value">@_stats.Luck</span>
+        </div>
+        <div class="stat-row">
+            <span class="stat-label">Memory</span>
+            <span class="stat-value">@_stats.Memory</span>
+        </div>
+        <div class="stat-row">
+            <span class="stat-label">Fate</span>
+            <span class="stat-value">@_stats.Fate</span>
+        </div>
+        <div class="stat-row">
+            <span class="stat-label">Eldritch</span>
+            <span class="stat-value">@_stats.Eldritch</span>
+        </div>
+        <div class="stat-row">
+            <span class="stat-label">Racial</span>
+            <span class="stat-value">@_stats.Racial</span>
         </div>
     }
 </div>
