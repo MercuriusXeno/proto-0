@@ -27,24 +27,27 @@
     fill: none;
 }
 
-/* Map node outlines (black stroke) */
+/* Map node outlines (stroke only, no fill) */
 .map-node .node-outline {
-    fill: #000;
-    stroke: rgba(255, 255, 255, 0.4);
-    stroke-width: 1.5;
+    fill: none;
+    stroke: #000;
+    stroke-width: 2;
 }
 
-/* Map node fills */
+/* Map node fills (colored centers) */
 .map-node.unexplored .node-fill {
     fill: rgba(60, 60, 60, 1); /* Very dark grey */
+    stroke: none;
 }
 
 .map-node.explored .node-fill {
     fill: rgba(140, 140, 140, 1); /* Grey */
+    stroke: none;
 }
 
 .map-node.current .node-fill {
     fill: var(--accent-color, rgba(100, 150, 200, 1)); /* Theme-based light blue */
+    stroke: none;
     animation: pulse 2s ease-in-out infinite;
 }
 

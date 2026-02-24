@@ -47,8 +47,8 @@
     [Parameter] public EventCallback<string> OnNavigate { get; set; }
 
     private List<CompassNode> _adjacentNodes = new();
-    private const double CompassRadius = 100.0;
-    private const double VerticalSpacing = 130.0; // Extra spacing for Up/Down
+    private const double CompassRadius = 70.0;
+    private const double VerticalSpacing = 90.0; // Extra spacing for Up/Down
 
     public void Refresh()
     {
@@ -117,15 +117,7 @@
 
     private string GetRoomLabel(string roomName)
     {
-        if (roomName.Length <= 10) return roomName;
-
-        var words = roomName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        if (words.Length > 1)
-        {
-            return string.Join("", words.Select(w => char.ToUpper(w[0])));
-        }
-
-        return roomName.Substring(0, 8) + "..";
+        return roomName;
     }
 
     private class CompassNode
