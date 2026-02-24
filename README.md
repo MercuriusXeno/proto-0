@@ -9,13 +9,17 @@ Explore procedurally connected dungeons, battle NPCs, collect items, and complet
 ## Features
 
 - **Entity-Component-System Architecture** — Clean separation of game logic and data
-- **Memory System** — Tracks visited rooms, discovered items, and NPC encounters with timestamps
+- **Interactive Buttons** — Clickable items, NPCs, and exits in terminal output with context menus
+- **Rich Output System** — Structured terminal output with entity references and metadata
+- **Memory System** — Tracks visited rooms, items taken, and NPC encounters with visit-based recollection
 - **Action Log** — Rolling history of player actions (movement, combat, items, interactions)
-- **Smart Terminal** — Clears for room-viewing commands, shows contextual room descriptions
-- **Command-Driven Interface** — Natural language commands (look, move, take, attack, etc.)
+- **Smart Terminal** — Persistent room description panel + action/conversation panel
+- **Command-Driven Interface** — Natural language commands (look, move, take, attack, wear, wield, etc.)
+- **Advanced Equipment System** — 16 body slots + 6 relic slots + dual wielding (left/right hand)
+- **13 Diverse Stats** — Strength, Agility, Dexterity, Perception, Intelligence, Willpower, Vitality, Charisma, Luck, Memory, Fate, Eldritch, Racial
+- **NPC Personality System** — NPCs have dispositions (friendly, standoffish, hostile) affecting interactions
 - **Inventory & Crafting** — Collect items, manage equipment, craft new items from recipes
 - **Quest System** — Track objectives and earn rewards
-- **NPC Interactions** — Dialogue trees and combat encounters
 
 ## Project Structure
 
@@ -29,8 +33,8 @@ proto-0/
 │   │   ├── Data/         # Content data structures
 │   │   └── Core/         # ECS framework, events, state management
 │   └── ProtoMud/         # Blazor WebAssembly UI
-│       ├── Components/   # UI components (Terminal, ActionLog, Stats, Map)
-│       ├── Pages/        # Blazor pages
+│       ├── Components/   # UI components (Terminal, EntityButton, PlayerInfoPanel, EquipmentPanel, ActionLogPanel, MapPanel)
+│       ├── Pages/        # Blazor pages (Home, Game)
 │       ├── Services/     # Game session hosting
 │       └── wwwroot/      # Static assets and game content (JSON)
 └── CLAUDE.md             # Development guide for contributors
@@ -76,10 +80,16 @@ The game uses natural language commands in the terminal. Try these to get starte
 - `north`, `south`, `east`, `west` — Move in a direction
 - `take [item]` — Pick up an item
 - `inventory` — View your items
-- `equip [item]` — Equip an item
+- `use [item]` — Use a consumable item (potions, food)
+- `wear [item]` — Wear armor or clothing
+- `wield [item] [left|right]` — Wield a weapon or shield (defaults to right hand)
+- `unwield [left|right]` — Stop wielding an item
 - `attack [npc]` — Attack an NPC
 - `talk [npc]` — Speak to an NPC
+- `status` — View character stats and equipment
 - `help` — See all available commands
+
+**Tip:** Click on highlighted items, NPCs, and exits in the terminal to see context menu actions!
 
 ## Architecture
 
@@ -113,9 +123,9 @@ All game content is defined in JSON files located in `src/ProtoMud/wwwroot/data/
 ## Development Roadmap
 
 - [x] **Goal #1: Output Window Management** — Memory system, action logging, smart terminal clearing
-- [ ] **Goal #2: Interactive Buttons** — Clickable elements in output with context menus
+- [x] **Goal #2: Interactive Buttons** — Clickable elements in output with context menus (EntityButton, rich output system)
 - [ ] **Goal #3: Navigation & Mapping** — Visual map showing visited rooms and connections
-- [ ] **Goal #4: Expanded Attributes** — 13 diverse stats with action-based growth and rebirth
+- [~] **Goal #4: Expanded Attributes** — 13 stats implemented; action-based growth and rebirth system pending
 - [ ] **Goal #5: Comprehensive Skills** — Magic types, skill progression, command unlocks
 - [ ] **Goal #6: Intelligent Aliasing** — Smart partial matching, disambiguation, item tagging
 - [ ] **Goal #7: Content Editor** — Visual toolchain for creating game assets

@@ -10,9 +10,15 @@ This is a text-based dungeon RPG built with C# .NET 9.0 and Blazor WebAssembly. 
 
 - **ProtoEngine** (`src/ProtoEngine/`): Core game logic library
   - Platform-agnostic, contains all game systems, components, and commands
+  - `Commands/` — Player commands including EntityReference and OutputLine for rich output
+  - `Components/` — Data components including EquipmentComponent with 24 slots (16 body + 6 relic + 2 wielding)
+  - `Systems/` — Game systems including MemorySystem, ActionLogSystem, NpcSystem
+  - `Data/` — Content structures including NpcDisposition for personality traits
 - **ProtoMud** (`src/ProtoMud/`): Blazor WebAssembly UI layer
   - Hosts the engine and provides the browser-based interface
-  - 3-column layout: Stats/Map (left), Terminal/ActionBar (center), Action Log (right)
+  - 3-column layout: PlayerInfo/Map (left split), Terminal/ActionBar (center), Action Log (right)
+  - Left sidebar split: PlayerInfoPanel (top) with Equipment/Stats tabs, MapPanel (bottom)
+  - Terminal split: Persistent room description panel (top), action/conversation panel (bottom)
 
 ## Development Commands
 
@@ -111,11 +117,29 @@ dotnet build
 ## Key Subsystems
 
 ### Memory System
-- Tracks player's visited rooms, discovered items, NPC encounters
+- Tracks player's visited rooms (with visit counts), items taken, NPC encounters
+- **Visit-based recollection**: Items only remembered if picked up; rooms show memories on revisits
 - Enables contextual room descriptions with timestamps
-- Component: `RoomMemoryComponent`
+- Component: `RoomMemoryComponent` (with RoomVisitCounts, CurrentRoomId)
 - System: `MemorySystem`
 - Commands reference this for "remembered" text
+
+### Equipment System
+- **24 Total Slots**: 16 body + 6 relic + 2 wielding
+- **Body Slots**: Head, Face, Neck, UpperTorso, LowerTorso, Waist, Shoulder, UpperArm, Elbow, Forearm, Wrist, Hand, Thigh, Knee, Calf, Ankle, Foot
+- **Relic Slots**: Relic1-6 (for rings, amulets, accessories)
+- **Wielding Slots**: WieldLeft, WieldRight (for weapons, shields, bows)
+- **Layer Support**: Each slot can hold multiple items (layering for armor)
+- **Wear vs Wield**: `WearCommand` for armor/clothing (worn on body), `WieldCommand` for weapons/shields (held in hands)
+- **Unarmed Combat**: Empty wielding slots = hand-to-hand attacks
+- Component: `EquipmentComponent` with Dictionary<EquipmentSlot, List<EquippedItem>>
+
+### Character Stats (13 Attributes)
+- **Physical**: Strength, Agility, Dexterity, Vitality
+- **Mental**: Perception, Intelligence, Willpower, Memory
+- **Social**: Charisma, Luck, Fate
+- **Special**: Eldritch, Racial
+- All stats start at 10; intended for action-based growth (not yet implemented)
 
 ### Action Log System
 - Records all player actions in a rolling log (max 100 entries)
@@ -125,9 +149,26 @@ dotnet build
 - Categories: Movement, Combat, Items, Interactions, System
 
 ### Terminal Behavior
-- **Room-viewing commands** (look, move, directional): Clear terminal and show only current room state
-- **Other commands**: Append output to terminal with command echo
-- Action log persists across all commands for historical reference
+- **Split Panels**: Room description (persistent) + action/conversation output (clears on each command)
+- **Room-viewing commands** (look, move, directional): Update room description panel
+- **Other commands**: Display results in action panel
+- **Auto-look**: Navigation commands can auto-execute "look" (toggleable checkbox)
+- **Real-time updates**: Commands can set `RefreshRoomDescription` flag to update room panel immediately
+
+### Interactive Buttons (Rich Output System)
+- **EntityReference**: Metadata for clickable entities (items, NPCs, exits) with available actions
+- **OutputLine**: Rich output structure containing text + entity references
+- **EntityButton**: Blazor component rendering clickable entities with context menus
+- **CommandResult.RichOutput**: Backwards-compatible rich output (falls back to plain text)
+- Commands can return `CommandResult.OkRich()` with OutputLine arrays
+- Terminal parses entity references and renders EntityButton components inline
+- Click entity → context menu → execute action (e.g., click sword → "Take" → executes "take sword")
+
+### NPC System
+- **Name vs Title**: NPCs have separate name ("Aldric") and title ("merchant")
+- **Disposition System**: NpcDisposition defines personality (friendly, standoffish, hostile)
+- **Discovery**: NPCs show as "someone" until talked to; disposition affects introduction
+- **Memory Integration**: MemorySystem tracks NPC meetings (requires talking, not just looking)
 
 ## Adding New Features
 
@@ -149,13 +190,30 @@ dotnet build
 3. Inject required systems via constructor
 4. Implement `Execute(CommandContext context, string[] args)` logic
 5. Register in `GameSessionHost.InitializeAsync()`
-6. Return `CommandResult.Success()` or `CommandResult.Fail()` with message
+6. Return `CommandResult.Ok()` or `CommandResult.Fail()` with message
+   - For rich output: Return `CommandResult.OkRich()` with OutputLine[] containing EntityReferences
+   - For real-time room updates: Set `RefreshRoomDescription = true` in result
+
+**Command Types**:
+- **UseCommand**: Consumables only (potions, food) — removes item from inventory
+- **WearCommand**: Armor and clothing — equips to body slots
+- **WieldCommand**: Weapons and shields — equips to WieldLeft/WieldRight slots
+- **UnwieldCommand**: Stop wielding — removes from wielding slots
 
 ### Adding a New UI Component
 1. Create `.razor` file in `src/ProtoMud/Components/`
 2. Inject `GameSessionHost` to access game state
 3. Subscribe to system state changes if needed
 4. Add to layout in `Game.razor` or `MainLayout.razor`
+
+**Key UI Components**:
+- **Terminal**: Split into room-description-panel and action-output-panel
+- **EntityButton**: Renders clickable entities with context menus (used by Terminal)
+- **PlayerInfoPanel**: Tabbed interface with Equipment and Stats tabs
+- **EquipmentPanel**: Displays all 24 equipment slots by region (Wielding, Head, Torso, Arms, Legs, Relics)
+- **StatsPanel**: Shows all 13 character attributes
+- **ActionLogPanel**: Rolling log of player actions (max 100 entries)
+- **MapPanel**: Room navigation and map display (currently simple, placeholder for future visual map)
 
 ## Important Patterns
 
@@ -177,15 +235,28 @@ context.EventBus.Publish(new ItemPickedUpEvent(playerId, itemId));
 ```
 
 ### Terminal Output Modes
-Commands should check if they're "room-viewing" commands:
-- **Clear mode**: Set `ClearsTerminal = true` in CommandResult
-- **Append mode**: Default, just return messages normally
+Terminal has two panels that update differently:
+- **Room description panel**: Updated by look/move commands, persists until next room-viewing command
+- **Action output panel**: Clears on every command, shows immediate action results
+- Commands can set `RefreshRoomDescription = true` to trigger automatic room description update
+  - Example: TalkCommand sets this on first NPC meeting to update "someone" → "Name the Title"
 
 ### Memory Integration
-Commands that discover or interact with entities should record memories:
+Commands that interact with entities should record memories:
 ```csharp
-memorySystem.RecordItemFound(state, itemId, roomId);
+// Items: Record when TAKEN, not just seen
+memorySystem.RecordItemTaken(state, itemId, roomId);
+
+// NPCs: Record when TALKED to (requires TalkCommand)
+memorySystem.RecordNpcMeeting(state, npcId, roomId);
+
+// Exits: Record when explored
 memorySystem.RecordExitExplored(state, roomId, direction);
+
+// Rooms: Visit tracking happens automatically in MoveCommand
+// Use GetCurrentVisitNumber() to check if revisit
+var visitNumber = memorySystem.GetCurrentVisitNumber(state, roomId);
+var isRevisit = visitNumber >= 1;
 ```
 
 ## Dependencies

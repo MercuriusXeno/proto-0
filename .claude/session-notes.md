@@ -1,132 +1,41 @@
-# Session Notes - 2025-02-23
+# Session Notes
+<!-- Written by /wrapup. Read by /catchup at the start of the next session. -->
+<!-- Overwritten each session — history preserved in git log of this file. -->
 
-## Last Session Summary
-
-Completed foundational repository and tooling setup for proto-0 (text-based dungeon RPG). Established vision for multi-agent collaborative development architecture.
+- **Date:** 2026-02-23
+- **Branch:** master
 
 ## What Was Done
-
-### Repository Hygiene
-- Created comprehensive .NET Blazor WebAssembly .gitignore
-- Completely destroyed and recreated Git repository
-- Removed 1,297 build artifacts from tracking
-- Created clean initial commit with only source files (96 files, 4,719 lines)
-- Recreated GitHub repository (MercuriusXeno/proto-0)
-
-### Documentation
-- Created CLAUDE.md with ECS architecture guide
-- Documented: build commands, system architecture, how to add components/systems/commands
-- Included patterns for accessing game state, publishing events, memory integration
-
-### Skills Framework Setup
-- Cloned skills repository from https://github.com/MercuriusXeno/claude
-- Deployed 13 skills globally to ~/.claude/skills/
-- Updated 3 skills (newrepo, findacross, newskill) to use correct path: C:\Users\antho\source\repos instead of E:\Source
-- Committed path updates to claude repo
-
-### Skills Now Available
-- **Session management**: /catchup, /wrapup, /save-and-exit, /resume-session
-- **Development**: /changelog, /cleanup, /envcheck, /pr, /updatedocs
-- **Scaffolding**: /newrepo, /newskill
-- **Search**: /findacross
-- **Config**: /quitasking
-
-## Architectural Vision Discussed
-
-### Multi-Agent Collaborative Development Model
-
-**Current State**: Single agent (Claude) helping with development
-
-**Target State**: Team of specialized agents, each owning a game subsystem
-
-**Proposed Hierarchy**:
-```
-User (Creative Director)
-    ↓
-Narrative Agent (Lead Architect - owns story/theme)
-    ↓
-Content Agents (serve narrative)
-    - WorldSystem Agent (rooms, locations, geography)
-    - ItemSystem Agent (items, equipment, economy)
-    - CombatSystem Agent (mechanics, balance, abilities)
-    - SpellSystem Agent (magic systems)
-    - NPCSystem Agent (characters, dialogue)
-    - QuestSystem Agent (objectives, progression)
-```
-
-**Key Principles**:
-1. User maintains creative control over narrative
-2. Narrative Agent coordinates content agents (reports to user)
-3. Content agents collaborate peer-to-peer via EventBus pattern
-4. User approves when agents negotiate overlapping concerns (e.g., Items ↔ Combat ↔ Spells)
-
-**Why This Works**:
-- ECS architecture has clean subsystem boundaries
-- EventBus provides inter-agent communication layer
-- Components are data contracts all agents respect
-- Systems are already autonomous
-- Mirrors real game development team structure
-
-### Skills for Content Generation
-
-Each agent would have specialized skills:
-- `/craft-narrative` - Narrative Agent creates story arcs, themes
-- `/design-room` - WorldSystem Agent creates locations
-- `/create-item` - ItemSystem Agent designs equipment/loot
-- `/design-combat` - CombatSystem Agent creates encounters
-- `/write-quest` - QuestSystem Agent designs objectives
-- etc.
-
-**Critical Insight**: Content generation should be subservient to overarching narrative. Narrative framework comes first.
+- Implemented interactive buttons (Goal #2): EntityReference, OutputLine, EntityButton components with clickable context menus
+- Redesigned equipment system: 24 slots (16 body + 6 relic + WieldLeft/WieldRight), multi-layer support via EquipmentComponent
+- Separated commands: UseCommand (consumables only), WearCommand (armor/clothing), WieldCommand (weapons/shields), UnwieldCommand
+- Implemented 13 diverse stats in StatsComponent: Strength, Agility, Dexterity, Perception, Intelligence, Willpower, Vitality, Charisma, Luck, Memory, Fate, Eldritch, Racial
+- Added NPC disposition system (NpcDisposition class) with name/title separation; NPCs show "someone" until talked to
+- Implemented visit-based memory: Items remembered only when taken (not just seen), room visit counts track revisits
+- Redesigned UI: Split terminal (persistent room description + clearing action panel), tabbed PlayerInfoPanel (Equipment/Stats), split left sidebar (PlayerInfo top, Map bottom)
+- Real-time room updates: Commands can set RefreshRoomDescription flag to trigger immediate room description refresh (e.g., TalkCommand on first NPC meeting)
+- Updated all NPCs in npcs.json with actual names (Aldric, Greta, Marcus, Ezra) and disposition data
+- Fixed save/load to use WieldRight slot for weapon backwards compatibility
 
 ## Decisions Made
-
-1. **Narrative-Led Design**: Narrative agent is the "lead architect" - all content serves the story
-2. **User as Creative Director**: Maintain close tabs on narrative to avoid missteps
-3. **Skills as Agent Tools**: Agents are specialized Claude instances; skills are their tools
-4. **Session Continuity**: Use /wrapup and /catchup to reduce context/cost between sessions
+- **Wear vs Wield**: Hand slot is for gloves (worn equipment), WieldLeft/WieldRight are separate wielding slots for weapons/shields. User clarified: "Hand slot is for hand equipment like gloves. Weapons are wielded."
+- **Rich output backwards compatible**: CommandResult.RichOutput coexists with plain Output; Terminal renders both. Existing commands work unchanged.
+- **Visit-based memory**: Items only show memory text on room revisits if previously taken (not just looked at). User feedback: "I want the player to remember that they found a sword in that room."
+- **NPC discovery pattern**: NPCs display as "someone" in room descriptions until player uses TalkCommand. Disposition affects introduction (friendly gives name+title, standoffish gives name only).
+- **Terminal split design**: Room description persists in top panel, action/conversation results clear in bottom panel on every command. Room description auto-updates when RefreshRoomDescription flag set.
+- **Equipment defaults**: Armor defaults to UpperTorso, weapons to WieldRight in current implementation. ItemData doesn't yet specify target slots.
 
 ## Open Items
-
-1. Design the Narrative Framework (creative bible that all agents reference)
-2. Create first specialized content-generation skill
-3. Establish agent coordination patterns
-4. Define agent-to-agent communication protocols
-5. Identify gaps in agent coverage
+- [ ] ItemData lacks EquipmentSlot field — armor/weapons default to hardcoded slots (UpperTorso, WieldRight)
+- [ ] Action-based stat growth not implemented — all 13 stats static at 10
+- [ ] Rebirth system for stats not implemented (Goal #4 partially complete)
+- [ ] Dynamic equipment slots (items adding slots, e.g., belt adding scabbard) deferred to future
+- [ ] Visual map system (Goal #3) not started — MapPanel is placeholder
 
 ## Next Steps
+1. Add EquipmentSlot/EquipmentSlots field to ItemData for items to specify which slot(s) they equip to
+2. Test interactive buttons in browser — verify EntityButton click → context menu → command execution works end-to-end
+3. Implement action-based stat growth system (stats increase through player actions, not leveling)
 
-1. **Use /catchup** at start of next session to restore this context
-2. **Design Narrative Framework** - Create the creative bible
-3. **Create first specialized skill** - Probably /craft-narrative or /design-room
-4. **Test the pattern** - Prove multi-agent concept works
-5. **Scale to full agent team** - Add remaining subsystem agents
-
-## Technical Context
-
-**Project Structure**:
-- ProtoEngine: Core game logic (ECS - Systems, Components, Commands)
-- ProtoMud: Blazor UI layer (3-column: Stats/Map, Terminal, Action Log)
-
-**Current Systems**:
-- WorldSystem, PlayerSystem, InventorySystem, CombatSystem
-- NpcSystem, QuestSystem, CraftingSystem, NarrativeSystem
-- MemorySystem (contextual room descriptions)
-- ActionLogSystem (player action history)
-
-**Development Commands**:
-- Run: `cd src/ProtoMud && dotnet run`
-- Build: `dotnet build`
-
-## Repository Status
-
-**proto-0**: Clean, pushed to GitHub (https://github.com/MercuriusXeno/proto-0)
-**claude**: Skills updated and committed (not yet pushed)
-
-## Notes for Future Sessions
-
-- Skills were deployed mid-session, so they're not loaded yet
-- Start fresh session to use /wrapup, /catchup, and other skills
-- Consider creating .claude/ directory in proto-0 for project-specific skills
-- Narrative framework should define: themes, tone, setting, core story arcs
-- Each content agent needs its own SKILL.md with ECS-aware instructions
+## Context for Next Session
+Equipment system redesign is complete and compiles successfully. All commands (Use/Wear/Wield/Unwield) differentiate consumables from worn equipment from wielded weapons. Rich output system is in place but only LookCommand uses it (TalkCommand also uses RichOutput for NPC entity references). Next priority is testing the interactive buttons in the browser to ensure the full click-to-action workflow functions correctly, then extending rich output to more commands (InventoryCommand, StatusCommand) if desired.
