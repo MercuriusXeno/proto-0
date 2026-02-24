@@ -32,6 +32,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - ExploredRoomsComponent for permanent room visit tracking
 - Exit preview system with hover tooltips showing contextual directional descriptions
 - RoomData.ExitPreviews for defining context-aware exit descriptions per room
+- Compass rose map (MapPanel) showing adjacent rooms in all directions with SVG rendering
+- Color-coded map nodes: current room (light blue), explored (grey), unexplored (dark grey)
+- Direction labels above nodes, room names below (if explored)
 
 ### Changed
 - Terminal redesigned with split panels: persistent room description (top) + action/conversation output (bottom)
@@ -44,6 +47,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - Character stats simplified from 13 attributes to 8 core attributes
 - Stat labels displayed as 3-letter abbreviations (STR, DEX, FOR, AGI, WIL, INT, PER, CHA)
 - NPCs now always show their names (removed name discovery mechanic)
+- Equipment panel slots reordered: Right and Left wield slots now at top of list
+- MapPanel completely redesigned from exit list to visual compass rose
 
 ### Removed
 - MemorySystem and RoomMemoryComponent (complex memory tracking)
@@ -53,6 +58,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - Timestamp tracking for NPC kills and item pickups
 - Layering support in equipment system
 - 5 stats removed: Vitality, Luck, Memory, Fate, Eldritch, Racial (replaced with Fortitude)
+- NarrativeSystem and generic time-of-day descriptions from room output
+- Redundant "Equipment" header from equipment panel tab
 
 ### Fixed
 - Real-time room description updates when game state changes

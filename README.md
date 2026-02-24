@@ -13,6 +13,7 @@ Explore procedurally connected dungeons, battle NPCs, collect items, and complet
 - **Rich Output System** — Structured terminal output with entity references and metadata
 - **Exit Previews** — Hover over exits to see contextual descriptions of what lies in that direction
 - **Room Exploration Tracking** — Permanent tracking of visited rooms; exits marked as explored/unexplored
+- **Compass Rose Map** — Visual map showing immediately adjacent rooms in all directions with color-coded exploration status
 - **Action Log** — Rolling history of player actions (movement, combat, items, interactions)
 - **Smart Terminal** — Persistent room description panel + action/conversation panel
 - **Time-of-Day System** — Game clock with visual time widget showing dawn/morning/midday/afternoon/evening/night cycles
@@ -129,7 +130,7 @@ All game content is defined in JSON files located in `src/ProtoMud/wwwroot/data/
 
 - [x] **Goal #1: Output Window Management** — Action logging, smart terminal clearing, room exploration tracking
 - [x] **Goal #2: Interactive Buttons** — Clickable elements with context menus (items/NPCs) and direct navigation (exits)
-- [~] **Goal #3: Navigation & Mapping** — Exit tracking ✓; visual map pending
+- [x] **Goal #3: Navigation & Mapping** — Compass rose map showing adjacent rooms with directional layout
 - [~] **Goal #4: Expanded Attributes** — 8 streamlined stats ✓; action-based growth and rebirth system pending
 - [ ] **Goal #5: Comprehensive Skills** — Magic types, skill progression, command unlocks
 - [ ] **Goal #6: Intelligent Aliasing** — Smart partial matching, disambiguation, item tagging

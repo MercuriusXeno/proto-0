@@ -15,8 +15,8 @@
 
         <!-- Draw center (current room) -->
         <g class="map-node current">
-            <circle cx="0" cy="0" r="15" class="node-outline" />
             <circle cx="0" cy="0" r="12" class="node-fill" />
+            <circle cx="0" cy="0" r="15" class="node-outline" />
             <svg:text x="0" y="5" text-anchor="middle" class="center-label">YOU</svg:text>
         </g>
 
@@ -27,8 +27,9 @@
                            node.IsExplored ? "map-node explored" : "map-node unexplored";
 
             <g class="@nodeClass">
-                <circle cx="@node.X" cy="@node.Y" r="10" class="node-outline" />
+                <!-- Draw fill first (background), then outline (foreground) -->
                 <circle cx="@node.X" cy="@node.Y" r="8" class="node-fill" />
+                <circle cx="@node.X" cy="@node.Y" r="10" class="node-outline" />
 
                 <!-- Direction label above node -->
                 <svg:text x="@node.X" y="@(node.Y - 18)" text-anchor="middle" class="direction-label">@node.Direction.ToUpper()</svg:text>
@@ -36,7 +37,7 @@
                 <!-- Room name below node (only if explored) -->
                 @if (node.IsExplored)
                 {
-                    <svg:text x="@node.X" y="@(node.Y + 20)" text-anchor="middle" class="room-label">@node.Label</svg:text>
+                    <svg:text x="@node.X" y="@(node.Y + 25)" text-anchor="middle" class="room-label">@node.Label</svg:text>
                 }
             </g>
         }

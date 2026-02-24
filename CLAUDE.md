@@ -188,6 +188,17 @@ dotnet build
 - NPCs always show their names (no discovery mechanic)
 - Component: `NpcComponent` with name, title, disposition
 
+### Compass Rose Map
+- **Visual Layout**: SVG-based orthogonal compass showing immediately adjacent rooms
+- **Positioning**: 8 cardinal/ordinal directions (N, NE, E, SE, S, SW, W, NW) + Up (above N) and Down (below S)
+- **Node Display**: Direction label above each node, room name below (if explored)
+- **Color Coding**:
+  - Current room: Light blue fill with pulsing animation, labeled "YOU"
+  - Explored rooms: Grey fill with room name displayed
+  - Unexplored rooms: Dark grey fill, no room name shown
+- **Component**: `MapPanel.razor` with configurable compass radius and spacing
+- **Data Source**: Uses `ExploredRoomsComponent` to determine which rooms have been visited
+
 ## Adding New Features
 
 ### Adding a New Component
@@ -228,10 +239,10 @@ dotnet build
 - **Terminal**: Split into room-description-panel and action-output-panel
 - **EntityButton**: Renders clickable entities; context menus for items/NPCs, direct navigation for exits, tooltips for previews
 - **PlayerInfoPanel**: Tabbed interface with Equipment and Stats tabs
-- **EquipmentPanel**: Displays all 11 equipment slots in a simple list
+- **EquipmentPanel**: Displays all 11 equipment slots in simple list (Right/Left wield slots at top)
 - **StatsPanel**: Shows all 8 character attributes with 3-letter abbreviations
 - **ActionLogPanel**: Rolling log of player actions (max 100 entries)
-- **MapPanel**: Room navigation and map display (currently simple, placeholder for future visual map)
+- **MapPanel**: SVG-based compass rose showing immediately adjacent rooms in all cardinal/ordinal directions plus Up/Down
 - **TimeWidget**: Displays current time of day (Dawn/Morning/Midday/Afternoon/Evening/Night) and day number based on game clock
 
 ## Important Patterns
